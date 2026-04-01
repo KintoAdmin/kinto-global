@@ -147,12 +147,13 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
   const [reportBusy, setReportBusy] = useState(false);
   const [standaloneReport, setStandaloneReport] = useState<any>(null);
   const [reportError, setReportError] = useState<string | null>(null);
-  const [metricDrafts, setMetricDrafts] = useState<Record<string, Record<string, string>>>({});
-  const metricRequestSeqRef = useRef<Record<string, number>>({});
-  const [, startTransition] = useTransition();
+ const [metricDrafts, setMetricDrafts] = useState<Record<string, Record<string, string>>>({});
+const metricRequestSeqRef = useRef<Record<string, number>>({});
+const [, startTransition] = useTransition();
+const activeView = view || activeTab;
 
-  // ── Load ─────────────────────────────────────────────────────────────────
-  async function load() {
+// ── Load ─────────────────────────────────────────────────────────────────
+async function load() {
     setLoading(true); setError(null);
     try {
       const res = await fetch(withAid('/api/operational-audit', assessmentId), { cache: 'no-store' });
@@ -415,7 +416,6 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
     router.push(buildRoute(pathname || '/diagnostics/operational-audit', { clientId: cId || null, assessmentId: aId || null, view: tab }));
   }
 
-  const activeView = view || activeTab;
 
   // ── Live stats — computed from responses, null-safe, always called ─────────
   // IMPORTANT: These must be before any early returns (Rules of Hooks)
