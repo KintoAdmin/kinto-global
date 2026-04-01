@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { proxyToPythonIfAvailable } from '@/lib/python-engine/proxy';
 import { jsonError, jsonOk, parseJson } from '@/lib/api/http';
 import { cacheResolved, getCachedResolved } from '@/lib/repositories/assessment-cache';

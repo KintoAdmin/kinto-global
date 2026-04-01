@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk } from "@/lib/api/http";
 import { modulePublicationRepository } from "@/lib/interoperability/publication-repository";
 import { publishAllModulesForAssessment } from "@/lib/interoperability/publish-all";

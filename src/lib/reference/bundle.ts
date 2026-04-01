@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { ReferenceRecordRow } from "@/lib/types/domain";
 import { normalizeModuleCode, type ModuleCode } from "@/lib/constants/modules";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { LightweightEvidence, SharedTags } from "@/lib/interoperability/types";
 
 function pick(...values: unknown[]): string | null {

@@ -1,9 +1,0 @@
-field_name,type,required,example,rule
-recommendation_id,text,Y,REC-DFD-D03-CW,Unique primary key
-finding_id,text,Y,FND-DFD-D03-CW,Foreign key to dfd_findings_library.finding_id
-domain_id,text,Y,D03,Foreign key to dfd_domains.domain_id
-score_trigger_band,text,Y,1-2,Must align with finding
-recommendation_summary,long_text,Y,"Run a structured data cleanup program, implement validation controls, and establish recurring quality review routines.",Required
-priority_default,text,Y,High,"Allowed values: High, Medium, Low"
-roadmap_phase_default,text,Y,Phase 1,"Allowed values: Phase 1, Phase 2, Phase 3"
-is_active,boolean,Y,TRUE,Only active records used

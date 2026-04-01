@@ -1,8 +1,0 @@
-field_name,type,required,example,rule
-domain_id,text,Y,D01,Unique primary key
-module_code,text,Y,DFD,Fixed = DFD
-domain_name,text,Y,Data Quality & Integrity,Required
-domain_description,long_text,Y,"Reviews completeness, accuracy, duplication, and consistency of revenue and operational records.",Required
-domain_weight_pct,number,Y,20,All active domain weights must total 100
-display_order,number,Y,3,Ascending order in UI
-is_active,boolean,Y,TRUE,Only active domains displayed

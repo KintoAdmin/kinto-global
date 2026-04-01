@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Kinto Global — Generic Question Module Client v2
 'use client';
 

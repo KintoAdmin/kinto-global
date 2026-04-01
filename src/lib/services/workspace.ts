@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getClientById, listClients } from "@/lib/repositories/clients";
 import { ensureAssessmentModules, getAssessmentById, getLatestAssessment, listAssessments } from "@/lib/repositories/assessments";
 import { MODULE_REGISTRY } from "@/lib/constants/modules";

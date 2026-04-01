@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs from 'node:fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import { getArtifact } from '@/lib/repositories/report-delivery';

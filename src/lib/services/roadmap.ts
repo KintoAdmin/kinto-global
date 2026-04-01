@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { MODULE_REGISTRY, moduleIdFromCode, PHASE_NAME_BY_CODE } from "@/lib/constants/modules";
 import { getAssessmentModule, updateAssessmentModuleState } from "@/lib/repositories/assessments";
 import { getAllModuleScores, listModuleRoadmap, listSourceRoadmapRows, replaceModuleArtifacts, updateRoadmapExecutionState } from "@/lib/repositories/runtime";

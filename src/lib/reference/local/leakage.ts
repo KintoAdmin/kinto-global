@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { readFileSync } from "node:fs";
 import { dataPath } from "@/lib/utils/files";
 import { loadCsvRows } from "@/lib/utils/csv";

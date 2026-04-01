@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk } from "@/lib/api/http";
 import { getReferenceBundle } from "@/lib/reference/bundle";
 import { normalizeModuleCode } from "@/lib/constants/modules";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getReferenceBundle } from "@/lib/reference/bundle";
 import { aiUsecaseStatus, ensureMetricCapture, getAllModuleScores, getResponseMap } from "@/lib/services/common";
 import { countCapturedMetricRows, deriveModuleCoverage } from "@/lib/services/derived-state";

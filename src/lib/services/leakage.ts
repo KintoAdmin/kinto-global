@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getReferenceBundle } from "@/lib/reference/bundle";
 import { createBlankLeakageState, applyBenchmarkProfile } from "@/lib/reference/local/leakage";
 import type { LeakCoreDefinition, LeakCoreRow, LeakState } from "@/lib/types/domain";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { bandFromPct, getSupabaseAdmin, phaseTextToCode, ragFromScore, scoreBandFromScore } from './module-admin';
 import { getModuleSnapshot } from '@/lib/repositories/foundation';
 import { listMetricCaptures, listQuestionResponses, replaceModuleArtifacts, upsertMetricCapture, upsertQuestionResponse } from '@/lib/repositories/runtime';

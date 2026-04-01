@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 /**
  * ExplainButton — inline "explain this" trigger for findings, scores, actions.

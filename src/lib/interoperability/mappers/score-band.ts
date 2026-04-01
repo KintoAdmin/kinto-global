@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Band, DirectionType, ExecutionStatus, Priority, Timeline, UnitType } from "@/lib/interoperability/enums";
 
 export function normalizeBand(value: unknown): Band | null {

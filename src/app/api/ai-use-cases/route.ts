@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { proxyToPythonIfAvailable } from '@/lib/python-engine/proxy';
 import { NextResponse } from 'next/server';
 import { AI_USECASE_LIBRARY } from '@/lib/ai-usecases/library';

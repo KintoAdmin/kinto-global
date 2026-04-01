@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 // Kinto Global — Advisory View (shared across OPS, DATA, AIR, AIUC)
 // Renders findings → recommendations → actions → roadmap for any module

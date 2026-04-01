@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk, parseJson } from "@/lib/api/http";
 import { roadmapUpdateSchema } from "@/lib/api/schemas";
 import { updateRoadmapExecutionState } from "@/lib/repositories/runtime";

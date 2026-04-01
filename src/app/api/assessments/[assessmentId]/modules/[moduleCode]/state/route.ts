@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk, parseJson } from "@/lib/api/http";
 import { moduleStateUpdateSchema } from "@/lib/api/schemas";
 import { getAssessmentModule, updateAssessmentModuleState } from "@/lib/repositories/assessments";

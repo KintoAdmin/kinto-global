@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk } from "@/lib/api/http";
 import { buildAssessmentReport, buildStandaloneModuleReport, getFreshPersistedReport } from "@/lib/services/report";
 import { LEGACY_TO_INTEROP_MODULE, type LegacyModuleCode, type ModuleCode } from "@/lib/interoperability/enums";

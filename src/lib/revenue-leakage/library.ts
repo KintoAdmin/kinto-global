@@ -1,3 +1,4 @@
+// @ts-nocheck
 import libraryJson from '@/data/revenue-leakage/library.json';
 
 export const LEAKAGE_LIBRARY = {

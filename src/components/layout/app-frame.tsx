@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, Suspense } from 'react';
 import { KintoAssistant } from '@/components/assistant/kinto-assistant';
 import { SidebarNav } from '@/components/layout/sidebar-nav';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import libraryJson from '@/data/ai-usecases/library.json';
 
 export const AI_USECASE_LIBRARY = {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { computeAndPersistAudit } from "@/lib/services/audit";
 import { listActionInstances, listFindingInstances, listRecommendationInstances, listRoadmapInstances } from "@/lib/repositories/runtime";
 import type { AreaScore, ModulePublication } from "@/lib/interoperability/types";

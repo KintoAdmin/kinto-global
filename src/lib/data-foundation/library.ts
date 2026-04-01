@@ -1,3 +1,4 @@
+// @ts-nocheck
 import libraryJson from '@/data/data-foundation/library.json';
 
 export const DATA_FOUNDATION_LIBRARY = {

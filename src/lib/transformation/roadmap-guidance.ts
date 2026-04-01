@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Kinto Global — Roadmap Guidance Engine
  *

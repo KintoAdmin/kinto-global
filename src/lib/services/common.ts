@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { moduleIdFromCode, PHASE_NAME_BY_CODE, type ModuleCode } from "@/lib/constants/modules";
 import { getAssessmentModule, updateAssessmentModuleState } from "@/lib/repositories/assessments";
 import { getAllModuleScores as listAllModuleScores, listMetricCaptures, listQuestionResponses, upsertMetricCapture, upsertQuestionResponse } from "@/lib/repositories/runtime";

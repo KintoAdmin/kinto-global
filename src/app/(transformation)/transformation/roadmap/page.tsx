@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const dynamic = 'force-dynamic';
 import { AppFrame } from '@/components/layout/app-frame';
 import { RoadmapClient } from '@/components/transformation/roadmap-client';

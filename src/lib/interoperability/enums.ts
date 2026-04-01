@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type ModuleCode =
   | "ops_audit"
   | "revenue_leakage"

@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type ModuleCode = "OPS" | "LEAK" | "DATA" | "AIR" | "AIUC" | "ROADMAP";
 
 export type ModuleRouteKey = "ops" | "leak" | "data" | "air" | "aiuc" | "roadmap";

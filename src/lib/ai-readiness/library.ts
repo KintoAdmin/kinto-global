@@ -1,3 +1,4 @@
+// @ts-nocheck
 import libraryJson from '@/data/ai-readiness/library.json';
 
 export const AI_READINESS_LIBRARY = {

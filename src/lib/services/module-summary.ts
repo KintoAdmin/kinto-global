@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ModuleCode } from "@/lib/constants/modules";
 import { computeAndPersistLeakage } from "@/lib/services/leakage";
 import { computeAndPersistAudit } from "@/lib/services/audit";

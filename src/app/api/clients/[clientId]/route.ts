@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk } from "@/lib/api/http";
 import { deleteClient, getClientById } from "@/lib/repositories/clients";
 

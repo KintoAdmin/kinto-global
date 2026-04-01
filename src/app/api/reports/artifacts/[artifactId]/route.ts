@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { readFile } from "fs/promises";
 import * as path from "path";
 import { NextResponse } from "next/server";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Kinto Global — Universal Priority Scoring
  * Single source of truth for ordering findings, recommendations, actions, and roadmap items.

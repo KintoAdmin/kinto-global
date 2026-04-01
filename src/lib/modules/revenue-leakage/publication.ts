@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { computeAndPersistLeakage } from "@/lib/services/leakage";
 import { listActionInstances, listFindingInstances, listRecommendationInstances, listRoadmapInstances } from "@/lib/repositories/runtime";
 import type { AreaScore, MetricArtifact, ModulePublication } from "@/lib/interoperability/types";

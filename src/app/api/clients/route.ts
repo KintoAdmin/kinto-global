@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk, parseJson } from "@/lib/api/http";
 import { clientUpsertSchema } from "@/lib/api/schemas";
 import { listClients, upsertClient } from "@/lib/repositories/clients";

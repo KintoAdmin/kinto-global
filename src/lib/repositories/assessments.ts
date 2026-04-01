@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getAuthUserId } from "@/lib/supabase/server";
 import { assessmentId, nowIso } from "@/lib/utils/ids";

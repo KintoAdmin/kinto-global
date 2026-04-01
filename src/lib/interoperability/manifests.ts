@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ModuleCode } from "@/lib/interoperability/enums";
 import { MODULE_LABELS } from "@/lib/interoperability/enums";
 

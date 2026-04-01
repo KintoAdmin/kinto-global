@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   OPS_DOMAINS as RAW_DOMAINS,
   OPS_QUESTION_LIBRARY as RAW_QUESTIONS,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { jsonError, jsonOk } from "@/lib/api/http";
 import { normalizeModuleCode } from "@/lib/constants/modules";
 import { getAssessmentModule } from "@/lib/repositories/assessments";

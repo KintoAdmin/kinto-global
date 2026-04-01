@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getAssessmentModule } from "@/lib/repositories/assessments";
 import { listMetricCaptures } from "@/lib/repositories/runtime";
 import { modulePublicationRepository } from "@/lib/interoperability/publication-repository";

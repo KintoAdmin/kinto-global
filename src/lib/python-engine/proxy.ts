@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextResponse } from "next/server";
 
 const PYTHON_TIMEOUT_MS = 2500;

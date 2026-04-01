@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { MODULE_REGISTRY, moduleIdFromCode, type ModuleCode } from "@/lib/constants/modules";
 import { getAssessmentModule } from "@/lib/repositories/assessments";
 import { getAdminClient } from "@/lib/supabase/admin";

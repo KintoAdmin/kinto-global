@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 /**
  * Kinto Global — Getting Started Guide

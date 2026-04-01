@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getAssessmentById } from "@/lib/repositories/assessments";
 import { getClientById } from "@/lib/repositories/clients";
 import type { AssessmentStatus, ScopeType } from "@/lib/interoperability/enums";

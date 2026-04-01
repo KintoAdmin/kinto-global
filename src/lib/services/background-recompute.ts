@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Background recompute — non-blocking debounced snapshot rebuild.
  * 

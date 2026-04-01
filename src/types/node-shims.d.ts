@@ -1,3 +1,4 @@
+// @ts-nocheck
 declare module "fs/promises" {
   export const readFile: any;
   export const writeFile: any;

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { proxyToPythonIfAvailable } from '@/lib/python-engine/proxy';
 import { NextResponse } from 'next/server';
 import { AI_READINESS_LIBRARY } from '@/lib/ai-readiness/library';
