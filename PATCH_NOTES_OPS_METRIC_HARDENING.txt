@@ -1,0 +1,31 @@
+Kinto Global — Operational Audit Metric Hardening Patch
+
+Purpose
+- Reduce perceived sluggishness in Operational Audit metric entry
+- Make KPI metric counts reflect immediately from live state
+- Remove unnecessary OPS report fetch from normal Operational Audit load
+- Reduce payload size for metric saves by returning only the saved metric row
+
+Files included
+- src/app/api/operational-audit/route.ts
+- src/components/diagnostics/operational-audit/assessment-client.tsx
+
+What changed
+1) Operational Audit page load no longer fetches OPS report preview on every module open.
+   Report data is now loaded only when the Report tab is opened.
+
+2) Metric POST response now returns only the saved metric row instead of refetching the full metric set.
+   The client merges that row into local state.
+
+3) Metric saves no longer use one global sequential queue.
+   The client now tracks per-metric request sequence so stale metric responses do not overwrite newer edits.
+
+4) KPI metric count now uses live metric capture state so the scorecard reflects immediately after input.
+
+5) A few expensive useMemo dependencies were narrowed so the whole module recalculates less often.
+
+How to apply
+1. Copy these files into your connected dev folder C:\Dev\kinto_rebuild
+2. Run a local build
+3. Commit and push
+4. Let Vercel redeploy your current dev app

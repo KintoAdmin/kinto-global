@@ -148,19 +148,14 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
   const [standaloneReport, setStandaloneReport] = useState<any>(null);
   const [reportError, setReportError] = useState<string | null>(null);
   const [metricDrafts, setMetricDrafts] = useState<Record<string, Record<string, string>>>({});
-  const queueRef = useRef(Promise.resolve());
+  const metricRequestSeqRef = useRef<Record<string, number>>({});
   const [, startTransition] = useTransition();
 
   // ── Load ─────────────────────────────────────────────────────────────────
   async function load() {
     setLoading(true); setError(null);
     try {
-      const [res, rptRes] = await Promise.all([
-        fetch(withAid('/api/operational-audit', assessmentId), { cache: 'no-store' }),
-        assessmentId
-          ? fetch(`/api/assessments/${encodeURIComponent(assessmentId)}/report/OPS`, { cache: 'no-store' }).catch(() => null)
-          : Promise.resolve(null),
-      ]);
+      const res = await fetch(withAid('/api/operational-audit', assessmentId), { cache: 'no-store' });
       const p = await res.json();
       if (!res.ok || p.ok === false) throw new Error(p.error || 'Failed to load Operational Audit.');
       const resolved = (p.data || p) as Payload;
@@ -168,18 +163,36 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
       const next: Record<string, boolean> = {};
       for (const d of resolved.bundle.domains || []) next[d.domain_id] = true;
       setOpenDomains(n => ({ ...next, ...n }));
-      if (rptRes) {
-        const rp = await rptRes.json().catch(() => null);
-        if (rptRes.ok && !rp?.error) setStandaloneReport(rp?.data || rp || null);
-        else { setStandaloneReport(null); if (rp?.error) setReportError(String(rp.error)); }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load.');
     } finally { setLoading(false); }
   }
 
+  async function loadStandaloneReport() {
+    if (!assessmentId) return;
+    try {
+      const rptRes = await fetch(`/api/assessments/${encodeURIComponent(assessmentId)}/report/OPS`, { cache: 'no-store' });
+      const rp = await rptRes.json().catch(() => null);
+      if (rptRes.ok && !rp?.error) {
+        setStandaloneReport(rp?.data || rp || null);
+        setReportError(null);
+      } else {
+        setStandaloneReport(null);
+        if (rp?.error) setReportError(String(rp.error));
+      }
+    } catch (err) {
+      setStandaloneReport(null);
+      setReportError(err instanceof Error ? err.message : 'Failed to load report preview.');
+    }
+  }
+
   useEffect(() => { void load(); }, [assessmentId]);
   useEffect(() => { setActiveTab(view || 'assessment'); }, [view]);
+  useEffect(() => {
+    if (activeView === 'report' && assessmentId && !standaloneReport && !reportBusy) {
+      void loadStandaloneReport();
+    }
+  }, [activeView, assessmentId, standaloneReport, reportBusy]);
 
   // ── Metric draft helpers ─────────────────────────────────────────────────
   const draftKey = (mId: string, wId?: string) => `${mId}::${wId || ''}`;
@@ -197,6 +210,19 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
       String(r.metric_id) === String(mId) && String(r.workflow_id || '') === String(wId || '')
     ) || {};
     return { ...persisted, ...(metricDrafts[draftKey(mId, wId)] || {}) };
+  };
+  const mergeMetricCaptureRow = (rows: MetricCapture[], nextRow?: MetricCapture | null) => {
+    if (!nextRow) return rows;
+    const rowKey = `${String(nextRow.metric_id || '')}::${String(nextRow.workflow_id || '')}`;
+    const existingIndex = rows.findIndex(
+      r => `${String(r.metric_id || '')}::${String(r.workflow_id || '')}` === rowKey
+    );
+    if (existingIndex >= 0) {
+      const copy = [...rows];
+      copy[existingIndex] = { ...copy[existingIndex], ...nextRow };
+      return copy;
+    }
+    return [...rows, nextRow];
   };
 
   // ── Optimistic update ────────────────────────────────────────────────────
@@ -259,33 +285,41 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
       let p: any = null;
       try { p = raw ? JSON.parse(raw) : null; } catch { /**/ }
       if (!res.ok || p?.ok === false) throw new Error(p?.error || raw || 'Save failed.');
-      // Handle response based on what's returned
       if (body.action === 'update-metric') {
-        if (p?.metricCaptures) setData(c => c ? { ...c, metricCaptures: p.metricCaptures } : c);
+        if (p?.metricCapture) {
+          setData(c => c ? { ...c, metricCaptures: mergeMetricCaptureRow(c.metricCaptures || [], p.metricCapture) } : c);
+        }
         clearDraft(String(body.metricId || ''), String(body.workflowId || ''));
       } else if (p?.responses && !p?.bundle) {
-        // Slim response (just responses array) — merge into existing data
         setData(c => c ? { ...c, responses: p.responses } : c);
       } else if (p && (p.bundle || p.data?.bundle)) {
         setData((p.data || p) as Payload);
       }
     };
+
     try {
       if (body.action === 'update-metric') {
-        queueRef.current = queueRef.current.then(execute);
-        await queueRef.current;
-      } else { await execute(); }
+        const requestKey = draftKey(String(body.metricId || ''), String(body.workflowId || ''));
+        const nextSeq = (metricRequestSeqRef.current[requestKey] || 0) + 1;
+        metricRequestSeqRef.current[requestKey] = nextSeq;
+        await execute();
+        if (metricRequestSeqRef.current[requestKey] !== nextSeq) return;
+      } else {
+        await execute();
+      }
     } catch (err) {
       if (body.action !== 'update-metric' && prev) setData(prev);
       setError(err instanceof Error ? err.message : 'Save failed.');
-    } finally { startTransition(() => setSavingLabel(null)); }
+    } finally {
+      startTransition(() => setSavingLabel(null));
+    }
   }
 
   // ── Computed values ───────────────────────────────────────────────────────
   const responseMap = useMemo(
-    () => new Map((data?.responses || []).map(r => [r.question_id, r])), [data]);
+    () => new Map((data?.responses || []).map(r => [r.question_id, r])), [data?.responses]);
   const metricMap = useMemo(
-    () => new Map((data?.metricCaptures || []).map(r => [`${r.metric_id}::${r.workflow_id || ''}`, r])), [data]);
+    () => new Map((data?.metricCaptures || []).map(r => [`${r.metric_id}::${r.workflow_id || ''}`, r])), [data?.metricCaptures]);
 
   const groupedDomains = useMemo(() => {
     if (!data) return [];
@@ -337,7 +371,7 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
       data.bundle.questions || [],
       data.responses || []
     );
-  }, [data]);
+  }, [data?.bundle?.domains, data?.bundle?.questions, data?.responses]);
 
   const domainScoreMap = useMemo(() => {
     const serverMap = new Map((data?.summary.domain_scores || []).map((d: any) => [d.domain_id, d]));
@@ -401,6 +435,16 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
     () => (data?.responses || []).filter(r => Number(r.score_1_to_5 || 0) > 0 && Number(r.score_1_to_5) <= 2).length,
     [data?.responses]
   );
+  const liveMetricsCaptured = useMemo(
+    () => (data?.metricCaptures || []).filter(r => {
+      const current = String(r.current_value || '').trim();
+      const target = String(r.target_value || '').trim();
+      const rag = String(r.rag_status || '').trim();
+      const trend = String(r.trend_direction || '').trim();
+      return Boolean(current || target || rag || trend);
+    }).length,
+    [data?.metricCaptures]
+  );
 
   // ── States ────────────────────────────────────────────────────────────────
   if (loading) return (
@@ -432,17 +476,21 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
       {/* Status bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Operational Audit module workspace</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {savingLabel && (
-            <span className="saving-indicator">
-              <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--brand)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-              {savingLabel}…
-            </span>
-          )}
-          {error && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{error}</span>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="view-tabs" style={{ flex: 1, borderBottom: 'none', marginBottom: 0 }}>
+          {['assessment','executive','metrics','advisory','report'].map(t => (
+            <button key={t} type="button" className={`view-tab${activeView === t ? ' active' : ''}`} onClick={() => goTab(t)}>
+              {t === 'assessment' ? 'Assessment' : t === 'executive' ? 'Executive Dashboard' : t === 'metrics' ? 'Metrics' : t === 'advisory' ? 'Advisory' : 'Report Preview'}
+            </button>
+          ))}
         </div>
+        {savingLabel && (
+          <span className="saving-indicator">
+            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--brand)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+            {savingLabel}…
+          </span>
+        )}
+        {error && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{error}</span>}
       </div>
 
       {/* KPI strip */}
@@ -453,7 +501,7 @@ export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) 
           { label: 'Critical/Weak', value: String(liveCritical), sub: 'Scores 1–2 (live)' },
           { label: 'Developing', value: String(summary.developing_findings?.length || 0), sub: 'Score 3' },
           { label: 'Roadmap', value: String(summary.roadmap?.length || 0), sub: 'Priority actions' },
-          { label: 'Metrics', value: `${summary.metrics_captured || 0}/${summary.metrics_total || 0}`, sub: 'Captured' },
+          { label: 'Metrics', value: `${liveMetricsCaptured}/${summary.metrics_total || 0}`, sub: 'Captured (live)' },
         ].map(k => (
           <div key={k.label} className="stat-card">
             <div className="stat-card-label">{k.label}</div>

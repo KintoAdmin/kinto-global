@@ -144,7 +144,7 @@ export async function POST(request: Request) {
         }
         return String(metricCapture.rag_status || 'Not captured');
       })();
-      await upsertMetricCapture(assessmentId, 'OPS', {
+      const savedMetricCapture = await upsertMetricCapture(assessmentId, 'OPS', {
         metricId: body.metricId,
         metricName: metricDef.metric_name,
         domainId: metricDef.domain_id,
@@ -163,9 +163,8 @@ export async function POST(request: Request) {
         notes: body.notes ?? String(metricCapture.notes || ''),
       });
       scheduleRecompute(assessmentId, 'OPS');
-      // Return just updated metrics for fast UI refresh
-      const updatedMetrics = await listMetricCaptures(assessmentId, 'OPS');
-      return jsonOk({ ok: true, assessmentId, metricCaptures: updatedMetrics });
+      // Return only the saved metric row so the UI can merge it without refetching the full metric set.
+      return jsonOk({ ok: true, assessmentId, metricCapture: savedMetricCapture });
     }
 
     throw new Error('Unsupported Operational Audit action.');
