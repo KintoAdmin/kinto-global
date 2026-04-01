@@ -49,6 +49,12 @@ export async function createAssessment(input: {
   reportingPeriodLabel?: string;
   scopeType?: string;
   scopeLabel?: string;
+  assessmentObjective?: string;
+  priorityOutcomes?: string;
+  painPoints?: string;
+  departmentsInScope?: string;
+  systemsInScope?: string;
+  locationsInScope?: string;
 }) {
   const supabase = getAdminClient();
   await seedModuleRegistry();
@@ -66,6 +72,12 @@ export async function createAssessment(input: {
     reporting_period_label: input.reportingPeriodLabel || "",
     scope_type: input.scopeType || "enterprise",
     scope_label: input.scopeLabel || "",
+    assessment_objective: input.assessmentObjective || "",
+    priority_outcomes: input.priorityOutcomes || "",
+    pain_points: input.painPoints || "",
+    departments_in_scope: input.departmentsInScope || "",
+    systems_in_scope: input.systemsInScope || "",
+    locations_in_scope: input.locationsInScope || "",
     status: "IN_PROGRESS",
     consultant_id: await getAuthUserId(),
     updated_at: nowIso()

@@ -497,21 +497,17 @@ export function RevenueLeakageWorkspaceClient({ assessmentId, view }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       {/* Status bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div className="view-tabs" style={{ flex: 1, borderBottom: 'none', marginBottom: 0 }}>
-          {['assessment','executive','metrics','report','advisory'].map(t => (
-            <button key={t} type="button" className={`view-tab${activeView === t ? ' active' : ''}`} onClick={() => setActiveTab(t as any)}>
-              {t === 'assessment' ? 'Assessment' : t === 'executive' ? 'Executive Dashboard' : t === 'metrics' ? 'Metrics' : t === 'report' ? 'Report Preview' : 'Advisory Dashboard'}
-            </button>
-          ))}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Revenue Leakage module workspace</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {savingLabel && (
+            <span className="saving-indicator">
+              <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--brand)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+              {savingLabel}…
+            </span>
+          )}
+          {error && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{error}</span>}
         </div>
-        {savingLabel && (
-          <span className="saving-indicator">
-            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--brand)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-            {savingLabel}…
-          </span>
-        )}
-        {error && <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{error}</span>}
       </div>
       <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
 

@@ -1,0 +1,13 @@
+Kinto whole patch aligned to dev baseline
+
+Included:
+- diagnostics duplicate sub-tab cleanup (Operational Audit + Revenue Leakage inner tabs removed so page-level tabs are the only owner)
+- first-login onboarding wizard
+- user profile page and API
+- Supabase migration 006_onboarding_profile_setup.sql
+
+Apply order:
+1. Overlay this patch on the dev baseline build.
+2. Run Supabase migration 006_onboarding_profile_setup.sql
+3. Redeploy
+4. Test first-login wizard, Profile page, Operational Audit, Revenue Leakage

@@ -7,12 +7,19 @@ const optionalTrimmed = z.union([trimmedString, z.null(), z.undefined()]).transf
 export const clientUpsertSchema = z.object({
   clientName: trimmedString.min(1),
   industry: optionalTrimmed,
+  subIndustry: optionalTrimmed,
   businessModel: optionalTrimmed,
   revenueModel: optionalTrimmed,
   companySize: optionalTrimmed,
+  employeeBand: optionalTrimmed,
+  annualRevenueBand: optionalTrimmed,
   region: optionalTrimmed,
+  country: optionalTrimmed,
+  tradingName: optionalTrimmed,
+  websiteUrl: optionalTrimmed,
   primaryContactName: optionalTrimmed,
   primaryContactEmail: optionalTrimmed,
+  servicesSummary: optionalTrimmed,
   notes: optionalTrimmed
 });
 
@@ -24,7 +31,46 @@ export const assessmentCreateSchema = z.object({
   assessmentVersion: optionalTrimmed,
   reportingPeriodLabel: optionalTrimmed,
   scopeType: optionalTrimmed,
-  scopeLabel: optionalTrimmed
+  scopeLabel: optionalTrimmed,
+  assessmentObjective: optionalTrimmed,
+  priorityOutcomes: optionalTrimmed,
+  painPoints: optionalTrimmed,
+  departmentsInScope: optionalTrimmed,
+  systemsInScope: optionalTrimmed,
+  locationsInScope: optionalTrimmed
+});
+
+
+export const userProfileSchema = z.object({
+  fullName: optionalTrimmed,
+  workspaceName: optionalTrimmed,
+  operatingMode: z.union([z.literal('own_business'), z.literal('consultant'), z.null(), z.undefined()]).transform((value) => (value == null ? undefined : value)),
+  jobTitle: optionalTrimmed,
+  phone: optionalTrimmed,
+  onboardingCompleted: z.boolean().optional()
+});
+
+export const onboardingSetupSchema = z.object({
+  mode: z.union([z.literal('own_business'), z.literal('consultant')]),
+  fullName: trimmedString.min(1),
+  workspaceName: optionalTrimmed,
+  jobTitle: optionalTrimmed,
+  phone: optionalTrimmed,
+  organizationName: trimmedString.min(1),
+  industry: optionalTrimmed,
+  companySize: optionalTrimmed,
+  websiteUrl: optionalTrimmed,
+  country: optionalTrimmed,
+  primaryContactEmail: optionalTrimmed,
+  primaryContactName: optionalTrimmed,
+  servicesSummary: optionalTrimmed,
+  assessmentName: trimmedString.min(1),
+  assessmentObjective: optionalTrimmed,
+  priorityOutcomes: optionalTrimmed,
+  painPoints: optionalTrimmed,
+  departmentsInScope: optionalTrimmed,
+  systemsInScope: optionalTrimmed,
+  locationsInScope: optionalTrimmed,
 });
 
 export const moduleStateUpdateSchema = z.object({

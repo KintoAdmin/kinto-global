@@ -17,13 +17,29 @@ export interface ReferenceRecordRow {
 export interface ClientProfileInput {
   clientName: string;
   industry?: string;
+  subIndustry?: string;
   businessModel?: string;
   revenueModel?: string;
   companySize?: string;
+  employeeBand?: string;
+  annualRevenueBand?: string;
   region?: string;
+  country?: string;
+  tradingName?: string;
+  websiteUrl?: string;
   primaryContactName?: string;
   primaryContactEmail?: string;
+  servicesSummary?: string;
   notes?: string;
+}
+
+export interface UserProfileInput {
+  fullName?: string;
+  workspaceName?: string;
+  operatingMode?: 'own_business' | 'consultant';
+  jobTitle?: string;
+  phone?: string;
+  onboardingCompleted?: boolean;
 }
 
 export interface LeakDriverDefinition {

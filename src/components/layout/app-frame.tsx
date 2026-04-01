@@ -3,6 +3,7 @@ import { ReactNode, Suspense } from 'react';
 import { KintoAssistant } from '@/components/assistant/kinto-assistant';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { WorkspaceControls } from '@/components/layout/workspace-controls';
+import { FirstLoginWizard } from '@/components/onboarding/first-login-wizard';
 
 type Props = {
   pathname: string;
@@ -32,6 +33,7 @@ export function AppFrame({ pathname, clientId, assessmentId, clients, assessment
           {children}
         </main>
       </div>
+      <FirstLoginWizard />
       {/* Global assistant — floats bottom-right, available on every page */}
       <KintoAssistant assessmentId={assessmentId} clientId={clientId} />
     </div>

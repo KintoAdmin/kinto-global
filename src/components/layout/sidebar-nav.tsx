@@ -11,6 +11,7 @@ const NAV = [
     links: [
       { href: '/workspace', label: 'Workspace',  icon: '⊞' },
       { href: '/reports',   label: 'Reports',    icon: '📄' },
+      { href: '/profile',   label: 'Profile',    icon: '👤' },
     ],
   },
   {
