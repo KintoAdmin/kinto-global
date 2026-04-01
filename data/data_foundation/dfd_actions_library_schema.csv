@@ -1,0 +1,12 @@
+field_name,type,required,example,rule
+action_id,text,Y,ACT-DFD-D03-CW-01,Unique primary key
+recommendation_id,text,Y,REC-DFD-D03-CW,Foreign key to dfd_recommendations_library.recommendation_id
+domain_id,text,Y,D03,Foreign key to dfd_domains.domain_id
+action_summary,long_text,Y,"Run a one-time cleanup covering duplicates, stale records, missing values, and invalid categorisation.",Required
+owner_type,text,Y,Analyst / Data Steward,Required
+effort_level,text,Y,High,"Allowed values: Low, Medium, High"
+expected_outcome,long_text,Y,Restored baseline data quality and more reliable reporting.,Required
+roadmap_phase,text,Y,Phase 1,Normally inherited from recommendation
+priority,text,Y,High,Normally inherited from recommendation
+display_order,number,Y,1,Sort within recommendation
+is_active,boolean,Y,TRUE,Only active records used

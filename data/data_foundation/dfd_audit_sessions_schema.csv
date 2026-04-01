@@ -1,0 +1,13 @@
+field_name,type,required,example,rule
+session_id,text,Y,DFD-CL001-2026Q1,Unique primary key
+client_id,text,Y,CL001,Required
+client_name,text,Y,Example Holdings,Required
+module_code,text,Y,DFD,Fixed = DFD
+audit_owner,text,Y,Sheldon,Required
+review_date,date,Y,2026-03-26,Required
+status,text,Y,In Progress,"Allowed values: Not Started, In Progress, Completed"
+overall_score,number,N,3.2,Calculated weighted score
+overall_pct,number,N,64,Calculated overall %
+overall_severity_band,text,N,Developing foundation,Calculated from overall % band
+highest_risk_domain_id,text,N,D05,Calculated weakest domain
+lowest_risk_domain_id,text,N,D01,Calculated strongest domain

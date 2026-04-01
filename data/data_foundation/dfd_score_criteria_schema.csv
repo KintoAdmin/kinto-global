@@ -1,0 +1,7 @@
+field_name,type,required,example,rule
+score_value,number,Y,2,Allowed values 1 to 5
+score_label,text,Y,Weak,Required
+score_description,long_text,Y,"Some structure exists, but major gaps reduce trust.",Required
+severity_band,text,Y,Critical / Weak,Required
+score_pct_equivalent,number,Y,40,Formula: score_value/5*100
+display_color,text,Y,orange,Used in UI

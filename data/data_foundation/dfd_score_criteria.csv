@@ -1,0 +1,6 @@
+Score,Label,Description,Severity Band,Percentage Equivalent,Default Priority,Default Roadmap Phase
+1,Critical weakness,Data/reporting is unreliable or largely uncontrolled.,Critical / Weak,20,High,Phase 1 - Stabilize
+2,Weak,"Some structure exists, but major inconsistency reduces trust.",Critical / Weak,40,High,Phase 1 - Stabilize
+3,Developing,"Basic controls exist, but reliability is uneven.",Developing,60,Medium,Phase 2 - Standardize
+4,Strong,"Well-structured and generally trusted, with minor gaps.",Strong / Managed,80,Low,Phase 3 - Optimize
+5,Controlled / Best practice,"Highly reliable, governed, and decision-useful.",Strong / Managed,100,Low,Phase 3 - Optimize

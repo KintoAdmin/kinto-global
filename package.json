@@ -1,0 +1,45 @@
+{
+  "name": "kinto-global",
+  "version": "1.0.0-rc.4",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "seed:reference": "tsx scripts/seed-reference-data.ts",
+    "qa:smoke": "tsx scripts/qa-smoke.ts",
+    "py:dev": "python -m uvicorn python_engine.app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "py:prod": "python -m uvicorn python_engine.app.main:app --host 127.0.0.1 --port 8000",
+    "dev:full": "concurrently \"npm run py:dev\" \"npm run dev\"",
+    "qa:ops-full-pass": "tsx scripts/qa-operational-audit-full-pass.ts",
+    "qa:full-system": "tsx scripts/qa-full-system-no-seed.ts",
+    "qa:full-build": "tsx scripts/qa-full-build.ts",
+    "e2e:full": "tsx scripts/e2e-full.ts",
+    "e2e:all": "tsx scripts/e2e-full.ts all",
+    "e2e:realistic": "tsx scripts/e2e-full.ts realistic",
+    "seed:full-coverage": "tsx scripts/seed-full-coverage-client.ts",
+    "seed:test-clients": "tsx scripts/seed-test-clients-v2.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.57.0",
+    "next": "15.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "csv-parse": "^5.5.6",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "typescript": "^5.9.2",
+    "tsx": "^4.19.2",
+    "concurrently": "^9.0.1"
+  },
+  "description": "Kinto Global \u2014 Business Diagnostic and Transformation Platform",
+  "author": "Kinto Global",
+  "license": "UNLICENSED"
+}

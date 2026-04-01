@@ -1,0 +1,10 @@
+field_name,type,required,example,rule
+question_id,text,Y,DFD-009,Unique primary key
+module_code,text,Y,DFD,Fixed = DFD
+domain_id,text,Y,D03,Foreign key to dfd_domains.domain_id
+question_text,long_text,Y,Are duplicate records minimal and actively controlled?,Required
+question_intent,long_text,Y,Tests duplicate prevention and master record hygiene.,Required
+evidence_prompt,long_text,Y,"Review duplicates, merge controls, validation rules, and recent record samples.",Required
+question_weight,number,Y,1,Default 1 unless weighted within domain
+display_order,number,Y,9,Ascending order within domain
+is_active,boolean,Y,TRUE,Only active questions displayed
