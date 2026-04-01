@@ -25,21 +25,26 @@
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.57.0",
+    "next": "15.3.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "csv-parse": "^5.5.6",
-    "next": "^15.5.7",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "zod": "^4.0.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "concurrently": "^9.0.1",
-    "tsx": "^4.19.2",
-    "typescript": "^5.9.2"
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.5.4",
+    "tsx": "^4.16.0",
+    "concurrently": "^9.0.1"
   },
-  "description": "Kinto Global — Business Diagnostic and Transformation Platform",
+  "description": "Kinto Global \u2014 Business Diagnostic and Transformation Platform",
   "author": "Kinto Global",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.9.2"
 }

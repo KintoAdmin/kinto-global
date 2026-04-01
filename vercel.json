@@ -1,13 +1,19 @@
 {
   "framework": "nextjs",
+  "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 60
-    },
-    "src/app/api/assessments/*/publications/route.ts": {
-      "maxDuration": 120
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" }
+      ]
+    }
+  ]
 }

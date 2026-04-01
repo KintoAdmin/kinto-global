@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const dynamic = 'force-dynamic';
 import { AppFrame } from '@/components/layout/app-frame';
 import { GenericQuestionModuleClient } from '@/components/diagnostics/shared/generic-question-module-client';

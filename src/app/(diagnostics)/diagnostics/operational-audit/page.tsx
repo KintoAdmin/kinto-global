@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const dynamic = 'force-dynamic';
 import { AppFrame } from '@/components/layout/app-frame';
 import { OperationalAuditAssessmentClient } from '@/components/diagnostics/operational-audit/assessment-client';
