@@ -110,24 +110,51 @@ type Props = { assessmentId?: string; view?: 'assessment' | 'executive' | 'metri
 // Compute domain scores live from current responses — gives instant feedback
 // without waiting for background recompute to complete
 function computeLiveDomainScores(
-  domains: Array<{ domain_id: string; domain_name: string }>,
-  questions: Array<{ question_id: string; domain_id: string }>,
+  domains: Array<{ domain_id?: string; domain_name?: string } & Record<string, unknown>>,
+  questions: Array<{ question_id: string; domain_id: string } & Record<string, unknown>>,
   responses: Array<{ question_id: string; score_1_to_5: number | null }>
 ): Record<string, { percentage: number; answered: number; total: number; maturity: string }> {
-  const responseMap = new Map(responses.map(r => [r.question_id, r]));
-  const result: Record<string, { percentage: number; answered: number; total: number; maturity: string }> = {};
+  const responseMap = new Map(responses.map((r) => [r.question_id, r]));
+  const result: Record<
+    string,
+    { percentage: number; answered: number; total: number; maturity: string }
+  > = {};
+
   for (const domain of domains) {
-    const domainQs = questions.filter(q => q.domain_id === domain.domain_id);
-    const answered = domainQs.filter(q => Number(responseMap.get(q.question_id)?.score_1_to_5 || 0) > 0);
-    const rawSum = answered.reduce((s, q) => s + Number(responseMap.get(q.question_id)?.score_1_to_5 || 0), 0);
+    const domainId = typeof domain.domain_id === 'string' ? domain.domain_id : '';
+    if (!domainId) continue;
+
+    const domainQs = questions.filter((q) => q.domain_id === domainId);
+    const answered = domainQs.filter(
+      (q) => Number(responseMap.get(q.question_id)?.score_1_to_5 || 0) > 0
+    );
+    const rawSum = answered.reduce(
+      (sum, q) => sum + Number(responseMap.get(q.question_id)?.score_1_to_5 || 0),
+      0
+    );
     const avgScore = answered.length > 0 ? rawSum / answered.length : 0;
     const percentage = answered.length > 0 ? Math.round((avgScore / 5) * 100) : 0;
-    const maturity = percentage >= 80 ? 'Strong' : percentage >= 60 ? 'Managed' : percentage >= 40 ? 'Developing' : percentage > 0 ? 'Weak' : 'Not scored';
-    result[domain.domain_id] = { percentage, answered: answered.length, total: domainQs.length, maturity };
+    const maturity =
+      percentage >= 80
+        ? 'Strong'
+        : percentage >= 60
+          ? 'Managed'
+          : percentage >= 40
+            ? 'Developing'
+            : percentage > 0
+              ? 'Weak'
+              : 'Not scored';
+
+    result[domainId] = {
+      percentage,
+      answered: answered.length,
+      total: domainQs.length,
+      maturity,
+    };
   }
+
   return result;
 }
-
 export function OperationalAuditAssessmentClient({ assessmentId, view }: Props) {
   const router = useRouter();
   const pathname = usePathname();
