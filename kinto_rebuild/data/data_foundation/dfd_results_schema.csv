@@ -1,0 +1,15 @@
+field_name,type,required,example,rule
+result_id,text,Y,RES-DFD-0001,Unique primary key
+session_id,text,Y,DFD-CL001-2026Q1,Foreign key to dfd_audit_sessions.session_id
+client_id,text,Y,CL001,Required
+question_id,text,Y,DFD-009,Foreign key to dfd_questions.question_id
+domain_id,text,Y,D03,Foreign key to dfd_domains.domain_id
+score_value,number,Y,2,User input 1 to 5
+score_pct,number,N,40,Formula: (score_value/5)*100
+severity_band,text,N,Critical / Weak,Formula from score band
+evidence_summary,long_text,N,Sample data shows 11% duplicate account records and stale opportunities older than 180 days.,Auditor input
+auditor_notes,long_text,N,Duplicate prevention is not configured and no monthly cleanup routine exists.,Auditor input
+confidence_level,text,N,High,"Allowed values: Low, Medium, High"
+major_issue_flag,boolean,N,TRUE,Optional override flag
+created_at,datetime,N,2026-03-26 10:30,Auto timestamp
+updated_at,datetime,N,2026-03-26 11:05,Auto timestamp

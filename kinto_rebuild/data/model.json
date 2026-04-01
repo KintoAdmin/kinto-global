@@ -1,0 +1,319 @@
+{
+  "cores": [
+    {
+      "name": "Qualified Lead Volume Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Qualified Leads",
+      "benchmark_label": "Target Qualified Leads",
+      "leakage_formula_label": "(Target Qualified Leads - Actual Qualified Leads) \u00d7 Target Qualified Lead-to-Win % \u00d7 Target Average Deal Size",
+      "drivers": [
+        {
+          "name": "Lead Source Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Qualified Lead Rate",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Response Speed",
+          "direction": "Lower is better"
+        },
+        {
+          "name": "Follow-Up Discipline",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Marketing Reach",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Increase the number of sales-ready leads entering the funnel.",
+        "actions": "Review which sources produce genuinely qualified leads, tighten qualification rules, and improve response speed on new enquiries.",
+        "automation": "Qualified lead alerts; source quality dashboards; response-time reminders; qualification workflow checks."
+      }
+    },
+    {
+      "name": "Qualified Lead-to-Win Conversion Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Qualified Lead-to-Win %",
+      "benchmark_label": "Target Qualified Lead-to-Win %",
+      "leakage_formula_label": "Actual Qualified Leads \u00d7 (Target Qualified Lead-to-Win % - Actual Qualified Lead-to-Win %) \u00d7 Target Average Deal Size",
+      "drivers": [
+        {
+          "name": "Proposal Acceptance",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Competitive Loss Rate",
+          "direction": "Lower is better"
+        },
+        {
+          "name": "Decision-Maker Access",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Sales Follow-Up Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Pricing Competitiveness",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Improve how many qualified leads turn into won deals.",
+        "actions": "Review proposal acceptance, loss reasons, stakeholder access, and deal follow-up quality to improve close performance.",
+        "automation": "Loss reason capture; deal follow-up reminders; proposal tracking; escalation alerts on stalled deals."
+      }
+    },
+    {
+      "name": "Average Deal Size Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Average Deal Size",
+      "benchmark_label": "Target Average Deal Size",
+      "leakage_formula_label": "Actual Qualified Leads \u00d7 Actual Qualified Lead-to-Win % \u00d7 (Target Average Deal Size - Actual Average Deal Size)",
+      "drivers": [
+        {
+          "name": "Discounting",
+          "direction": "Lower is better"
+        },
+        {
+          "name": "Pricing Discipline",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Upsell / Cross-Sell Rate",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Packaging Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Contract Term Length",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Increase the average value of won deals.",
+        "actions": "Tighten discounting, improve offer packaging, and raise attach rates on cross-sell and upsell motions.",
+        "automation": "Discount alerts; quote review checks; attach-rate dashboards; deal value monitoring."
+      }
+    },
+    {
+      "name": "Pricing / Discount Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Revenue Given Away",
+      "benchmark_label": "Allowed Revenue Given Away",
+      "leakage_formula_label": "Actual Revenue Given Away - Allowed Revenue Given Away",
+      "drivers": [
+        {
+          "name": "Discount Approval Discipline",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Pricing Governance",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Quote Accuracy",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Negotiation Discipline",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Deal Desk Control",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Reduce revenue given away through uncontrolled pricing and discounting.",
+        "actions": "Check the largest discounts, review quote exceptions, and strengthen approvals on price changes.",
+        "automation": "Discount approval workflows; pricing exception alerts; quote audit checks."
+      }
+    },
+    {
+      "name": "Unbilled / Uninvoiced Revenue Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Unbilled Revenue",
+      "benchmark_label": "Allowed Unbilled Revenue",
+      "leakage_formula_label": "Actual Unbilled Revenue - Allowed Unbilled Revenue",
+      "drivers": [
+        {
+          "name": "Delivery-to-Billing Handoff",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Invoice Readiness",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Timesheet / Usage Capture",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Billing Workflow Speed",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Billing Setup Accuracy",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Make sure earned revenue is billed quickly and accurately.",
+        "actions": "Review completed work not yet billed, improve billing readiness, and tighten handoffs from delivery into invoicing.",
+        "automation": "Unbilled revenue alerts; billing readiness dashboards; workflow reminders."
+      }
+    },
+    {
+      "name": "Billing Error / Credit Note Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Credit Notes and Billing Losses",
+      "benchmark_label": "Allowed Credit Notes and Billing Losses",
+      "leakage_formula_label": "Actual Credit Notes and Billing Losses - Allowed Credit Notes and Billing Losses",
+      "drivers": [
+        {
+          "name": "Invoice Accuracy",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Contract-to-Billing Setup Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Order Entry Accuracy",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Dispute Rate",
+          "direction": "Lower is better"
+        },
+        {
+          "name": "Credit Note Approval Discipline",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Reduce revenue lost from incorrect invoices, disputes, and credit notes.",
+        "actions": "Review why invoices are being corrected or credited and tighten billing controls upstream.",
+        "automation": "Billing error alerts; dispute tracking; credit note approval workflows."
+      }
+    },
+    {
+      "name": "Revenue Churn Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Churned Revenue",
+      "benchmark_label": "Allowed Churned Revenue",
+      "leakage_formula_label": "Actual Churned Revenue - Allowed Churned Revenue",
+      "drivers": [
+        {
+          "name": "Customer Satisfaction",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Service Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Product Adoption",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Renewal Engagement",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Save Effectiveness",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Protect recurring revenue by reducing avoidable customer loss.",
+        "actions": "Review churn reasons, improve renewal discipline, and intervene earlier on at-risk accounts.",
+        "automation": "Churn alerts; renewal reminders; customer health dashboards; save-plan workflows."
+      }
+    },
+    {
+      "name": "Expansion Revenue Gap",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Expansion Revenue",
+      "benchmark_label": "Target Expansion Revenue",
+      "leakage_formula_label": "Target Expansion Revenue - Actual Expansion Revenue",
+      "drivers": [
+        {
+          "name": "Account Management Quality",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Upsell / Cross-Sell Conversion",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Customer Value Realization",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Product Adoption Depth",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Expansion Offer Relevance",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Grow more revenue from existing customers.",
+        "actions": "Review account plans, target the best expansion opportunities, and strengthen product usage and value realization.",
+        "automation": "Expansion alerts; account plan workflows; cross-sell prompts; adoption dashboards."
+      }
+    },
+    {
+      "name": "Bad Debt / Collections Leakage",
+      "category": "Revenue Leakage Core",
+      "direction": "Lower is better",
+      "actual_label": "Actual Uncollectable Revenue",
+      "benchmark_label": "Allowed Uncollectable Revenue",
+      "leakage_formula_label": "Actual Uncollectable Revenue - Allowed Uncollectable Revenue",
+      "drivers": [
+        {
+          "name": "Credit Control",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Collection Follow-Up Speed",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Dispute Resolution Speed",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Payment Terms Discipline",
+          "direction": "Higher is better"
+        },
+        {
+          "name": "Customer Payment Behaviour",
+          "direction": "Higher is better"
+        }
+      ],
+      "advisory": {
+        "process": "Reduce billed revenue that becomes uncollectable.",
+        "actions": "Tighten collections, improve dispute handling, and review customers with poor payment behaviour earlier.",
+        "automation": "Collections alerts; overdue reminders; bad debt monitoring; dispute workflow automation."
+      }
+    }
+  ]
+}

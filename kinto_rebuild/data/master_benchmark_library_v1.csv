@@ -1,0 +1,237 @@
+Profile,Metric/Driver,Default Value,Unit,Type,Source,Confidence,Editable,Notes
+Managed Services SME,Managed service gross margin,46.2,%,External,ConnectWise / Service Leadership Q2 2024,High,No,Average managed service gross margin context benchmark.
+Managed Services SME,Managed service gross margin stretch,48+,%,External,ConnectWise / Service Leadership best-in-class guidance,Medium,Yes,"Stretch context, not a hard rule."
+Managed Services SME,Project / professional services gross margin,19.4,%,External,ConnectWise / Service Leadership Q2 2024,Medium,Yes,Useful context benchmark for project/professional services.
+Managed Services SME,Retention target band,93-97,% monthly retention,External-Hybrid,Directional recurring-revenue benchmark family,Medium,Yes,Use directionally for recurring MSP contracts.
+Managed Services SME,DSO target band,30-50,days,External-Hybrid,Collections efficiency benchmark band,Medium,Yes,"Use as a band, not a fixed universal number."
+Managed Services SME,Qualified Lead Volume Leakage,No fixed external default,client-specific target,Client-specific,Client revenue plan / capacity model,High,Yes,Better set from client plan than public benchmark.
+Managed Services SME,Qualified Lead-to-Win Conversion Leakage,10-12,%,Hybrid,Starting default for managed services SME,Low,Yes,Override with client history where available.
+Managed Services SME,Average Deal Size Leakage,No universal number,currency,Hybrid,Profile default by segment,Low,Yes,Adjust manually based on client pricing and scope.
+Managed Services SME,Pricing / Discount Leakage tolerance,5-8,% allowed discount band,Internal threshold,Commercial policy / internal control,Medium,Yes,Use as internal pricing control threshold.
+Managed Services SME,Unbilled / Uninvoiced Revenue Leakage tolerance,0-3,% of monthly revenue,Internal threshold,Operational control threshold,Medium,Yes,Operational hygiene threshold.
+Managed Services SME,Billing Error / Credit Note Leakage tolerance,0-1,% of billed revenue,Internal threshold,Finance / billing control threshold,Medium,Yes,Billing quality tolerance.
+Managed Services SME,Revenue Churn Leakage,5,% monthly upper warning threshold,External-Hybrid,Directional retention/churn family,Medium,Yes,Adjust for contract structure and business model.
+Managed Services SME,Expansion Revenue Gap,10-15,% growth target,Hybrid,Starting default for existing-customer growth,Low,Yes,Best used as editable default.
+Managed Services SME,Bad Debt / Collections Leakage tolerance,0.5-1.5,% of billed revenue,Internal threshold,Credit control / finance policy,Medium,Yes,Use with DSO as external collections context.
+Managed Services SME,Lead Source Quality,Internal operating standard,score / %,Internal target,Sales and marketing operating standard,Medium,Yes,Quality of sources bringing in the right buyers.
+Managed Services SME,Qualified Lead Rate,Internal operating standard,%,Internal target,Sales and marketing operating standard,Medium,Yes,Share of enquiries that become qualified leads.
+Managed Services SME,Response Speed,Internal operating standard,time,Internal target,Sales operating standard,Medium,Yes,How quickly new interest is handled.
+Managed Services SME,Follow-Up Discipline,Internal operating standard,score / %,Internal target,Sales operating standard,Medium,Yes,Consistency of follow-up until clear outcome.
+Managed Services SME,Marketing Reach,Internal operating standard,score / volume,Internal target,Marketing operating standard,Medium,Yes,Relevant market reach.
+Managed Services SME,Proposal Acceptance,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often proposals are accepted or advanced.
+Managed Services SME,Competitive Loss Rate,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often deals are lost to competitors.
+Managed Services SME,Decision-Maker Access,Internal sales effectiveness standard,% / score,Internal target,Sales effectiveness standard,Medium,Yes,Access to true buying authority.
+Managed Services SME,Sales Follow-Up Quality,Internal sales effectiveness standard,score / %,Internal target,Sales effectiveness standard,Medium,Yes,Quality of pursuit after qualification.
+Managed Services SME,Pricing Competitiveness,Internal sales effectiveness standard,score,Internal target,Sales effectiveness standard,Medium,Yes,Commercial competitiveness of price positioning.
+Managed Services SME,Discounting,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,How much price is being given away.
+Managed Services SME,Pricing Discipline,Internal commercial standard,score / %,Internal target,Commercial operating standard,Medium,Yes,Ability to protect price and approvals.
+Managed Services SME,Upsell / Cross-Sell Rate,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,Attachment of additional services/products.
+Managed Services SME,Packaging Quality,Internal commercial standard,score,Internal target,Commercial operating standard,Medium,Yes,How clearly the offer is packaged for value.
+Managed Services SME,Contract Term Length,Internal commercial standard,months,Internal target,Commercial operating standard,Medium,Yes,Term quality supporting deal value.
+Managed Services SME,Discount Approval Discipline,Internal policy/process standard,score / %,Internal target,Commercial policy standard,Medium,Yes,Discount governance discipline.
+Managed Services SME,Pricing Governance,Internal policy/process standard,score,Internal target,Commercial policy standard,Medium,Yes,Strength of pricing controls.
+Managed Services SME,Quote Accuracy,Internal policy/process standard,%,Internal target,Commercial process standard,Medium,Yes,Accuracy of quotes first time.
+Managed Services SME,Negotiation Discipline,Internal policy/process standard,score,Internal target,Commercial process standard,Medium,Yes,How well value is protected in negotiation.
+Managed Services SME,Deal Desk Control,Internal policy/process standard,score / %,Internal target,Commercial process standard,Medium,Yes,Review quality on complex deals.
+Managed Services SME,Delivery-to-Billing Handoff,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Quality of handoff from delivery to billing.
+Managed Services SME,Invoice Readiness,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Readiness of completed work for invoicing.
+Managed Services SME,Timesheet / Usage Capture,Internal operational control standard,%,Internal target,Operations / finance control standard,High,Yes,Completeness of billable records.
+Managed Services SME,Billing Workflow Speed,Internal operational control standard,time / score,Internal target,Operations / finance control standard,High,Yes,Speed from completion to invoice.
+Managed Services SME,Billing Setup Accuracy,Internal operational control standard,% / score,Internal target,Operations / finance control standard,High,Yes,Accuracy of billing setup and rates.
+Managed Services SME,Invoice Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Invoice correctness first time.
+Managed Services SME,Contract-to-Billing Setup Quality,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,Correct translation of contracts into billing rules.
+Managed Services SME,Order Entry Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Accuracy of order capture before billing.
+Managed Services SME,Dispute Rate,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Frequency of invoice disputes.
+Managed Services SME,Credit Note Approval Discipline,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,Control quality over credit note approvals.
+Managed Services SME,Customer Satisfaction,Internal customer success standard,score / %,Internal target,Customer success standard,Medium,Yes,Overall customer satisfaction.
+Managed Services SME,Service Quality,Internal customer success standard,score / %,Internal target,Customer success standard,Medium,Yes,How well the business delivers promised outcomes.
+Managed Services SME,Product Adoption,Internal customer success standard,% / score,Internal target,Customer success standard,Medium,Yes,Extent to which customers use what they bought.
+Managed Services SME,Renewal Engagement,Internal customer success standard,score / %,Internal target,Customer success standard,Medium,Yes,Timeliness and quality of renewal management.
+Managed Services SME,Save Effectiveness,Internal customer success standard,%,Internal target,Customer success standard,Medium,Yes,Ability to retain at-risk customers.
+Managed Services SME,Account Management Quality,Internal account-growth standard,score / %,Internal target,Account management standard,Medium,Yes,How well accounts are protected and grown.
+Managed Services SME,Upsell / Cross-Sell Conversion,Internal account-growth standard,%,Internal target,Account growth standard,Medium,Yes,Conversion of expansion opportunities.
+Managed Services SME,Customer Value Realization,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,How strongly customers realize value from services.
+Managed Services SME,Product Adoption Depth,Internal account-growth standard,score / %,Internal target,Account growth standard,Medium,Yes,Breadth and depth of usage.
+Managed Services SME,Expansion Offer Relevance,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,How well growth offers fit customer needs.
+Managed Services SME,Credit Control,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Strength of credit risk control.
+Managed Services SME,Collection Follow-Up Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of chasing overdue invoices.
+Managed Services SME,Dispute Resolution Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of resolving payment-blocking disputes.
+Managed Services SME,Payment Terms Discipline,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Consistency of setting and enforcing terms.
+Managed Services SME,Customer Payment Behaviour,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Reliability of customer payments.
+Professional Services SME,EBITDA margin,9.8,%,External,2025 SPI Professional Services Maturity Benchmark / Kantata,Medium,No,Industry-wide professional services context benchmark; not directly a leakage target.
+Professional Services SME,Billable utilization target,80,%,External-Hybrid,Runn professional services guidance,Medium,Yes,"Use as a starting utilization target, then tailor by firm model and seniority mix."
+Professional Services SME,Billable utilization within utilization target,80,% of utilized time,External-Hybrid,Runn professional services guidance,Medium,Yes,Directional benchmark; use as a management default.
+Professional Services SME,DSO target band,30-50,days,External-Hybrid,NetSuite DSO guidance and collections benchmarking practice,Medium,Yes,"Lower is better; use as a band, not a single universal number."
+Professional Services SME,Qualified Lead Volume Leakage,No fixed external default,client-specific target,Client-specific,Client revenue plan / capacity model,High,Yes,Better set from client growth plan and team capacity than public benchmark.
+Professional Services SME,Qualified Lead-to-Win Conversion Leakage,15-25,%,Hybrid,Professional services starting default,Low,Yes,Useful default for advisory/consulting-type SMEs; override with client history.
+Professional Services SME,Average Deal Size Leakage,No universal number,currency,Hybrid,Profile default by service segment,Low,Yes,"Strongly dependent on service mix, market, and seniority model."
+Professional Services SME,Pricing / Discount Leakage tolerance,5-10,% allowed discount band,Internal threshold,Commercial policy / internal control,Medium,Yes,Use as internal pricing control threshold rather than industry fact.
+Professional Services SME,Unbilled / Uninvoiced Revenue Leakage tolerance,0-5,% of monthly revenue,Internal threshold,Operational control threshold,Medium,Yes,Internal control target for time-and-materials and milestone billing businesses.
+Professional Services SME,Billing Error / Credit Note Leakage tolerance,0-1,% of billed revenue,Internal threshold,Finance / billing control threshold,Medium,Yes,Billing quality tolerance.
+Professional Services SME,Revenue Churn Leakage,3-7,% annual revenue churn band,Hybrid,Directional recurring/pro services client retention band,Low,Yes,Use directionally; many professional services firms use retention rather than churn.
+Professional Services SME,Expansion Revenue Gap,5-15,% growth target,Hybrid,Starting default for existing-client growth,Low,Yes,Best used as editable default based on cross-sell / retainer model.
+Professional Services SME,Bad Debt / Collections Leakage tolerance,0.5-1.5,% of billed revenue,Internal threshold,Credit control / finance policy,Medium,Yes,Use with DSO as external collections context.
+Professional Services SME,Lead Source Quality,Internal operating standard,score / %,Internal target,Sales and marketing operating standard,Medium,Yes,Quality of channels producing credible opportunities.
+Professional Services SME,Qualified Lead Rate,Internal operating standard,%,Internal target,Sales and marketing operating standard,Medium,Yes,Share of enquiries that become genuinely qualified opportunities.
+Professional Services SME,Response Speed,Internal operating standard,time,Internal target,Sales operating standard,Medium,Yes,How quickly high-intent prospects are engaged.
+Professional Services SME,Follow-Up Discipline,Internal operating standard,score / %,Internal target,Sales operating standard,Medium,Yes,Consistency of follow-up until a clear next step or decision.
+Professional Services SME,Marketing Reach,Internal operating standard,score / volume,Internal target,Marketing operating standard,Medium,Yes,Relevant reach into the firm’s target market.
+Professional Services SME,Proposal Acceptance,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often proposals advance or are accepted.
+Professional Services SME,Competitive Loss Rate,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often work is lost to competitors.
+Professional Services SME,Decision-Maker Access,Internal sales effectiveness standard,% / score,Internal target,Sales effectiveness standard,Medium,Yes,Ability to engage the actual buying authority.
+Professional Services SME,Sales Follow-Up Quality,Internal sales effectiveness standard,score / %,Internal target,Sales effectiveness standard,Medium,Yes,Quality of pursuit and progression after qualification.
+Professional Services SME,Pricing Competitiveness,Internal sales effectiveness standard,score,Internal target,Sales effectiveness standard,Medium,Yes,Whether pricing is competitive enough without eroding value.
+Professional Services SME,Discounting,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,How much fee value is being conceded through discounting.
+Professional Services SME,Pricing Discipline,Internal commercial standard,score / %,Internal target,Commercial operating standard,Medium,Yes,Ability to protect planned rates and fee structure.
+Professional Services SME,Upsell / Cross-Sell Rate,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,Attachment of additional services or workstreams.
+Professional Services SME,Packaging Quality,Internal commercial standard,score,Internal target,Commercial operating standard,Medium,Yes,How clearly services are structured into valuable offers.
+Professional Services SME,Contract Term Length,Internal commercial standard,months,Internal target,Commercial operating standard,Medium,Yes,Commercial strength of contract duration or retainer length.
+Professional Services SME,Discount Approval Discipline,Internal policy/process standard,score / %,Internal target,Commercial policy standard,Medium,Yes,Fee discount governance discipline.
+Professional Services SME,Pricing Governance,Internal policy/process standard,score,Internal target,Commercial policy standard,Medium,Yes,Strength of pricing controls and approvals.
+Professional Services SME,Quote Accuracy,Internal policy/process standard,%,Internal target,Commercial process standard,Medium,Yes,Accuracy of proposals and quotes first time.
+Professional Services SME,Negotiation Discipline,Internal policy/process standard,score,Internal target,Commercial process standard,Medium,Yes,How well commercial value is protected during negotiation.
+Professional Services SME,Deal Desk Control,Internal policy/process standard,score / %,Internal target,Commercial process standard,Medium,Yes,Review quality on larger or more complex proposals.
+Professional Services SME,Delivery-to-Billing Handoff,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Quality of handoff from delivery into billing.
+Professional Services SME,Invoice Readiness,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Whether completed work is ready to invoice without delay.
+Professional Services SME,Timesheet / Usage Capture,Internal operational control standard,%,Internal target,Operations / finance control standard,High,Yes,"Completeness of time, usage, or milestone evidence."
+Professional Services SME,Billing Workflow Speed,Internal operational control standard,time / score,Internal target,Operations / finance control standard,High,Yes,Speed from work completion to invoice issue.
+Professional Services SME,Billing Setup Accuracy,Internal operational control standard,% / score,Internal target,Operations / finance control standard,High,Yes,"Accuracy of billing setup, rates, and customer terms."
+Professional Services SME,Invoice Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Invoice correctness first time.
+Professional Services SME,Contract-to-Billing Setup Quality,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,Correct translation of contracts into billing rules.
+Professional Services SME,Order Entry Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Accuracy of order or scope capture before billing.
+Professional Services SME,Dispute Rate,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Frequency of invoice disputes or fee challenges.
+Professional Services SME,Credit Note Approval Discipline,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,Control quality over fee reversals and credit notes.
+Professional Services SME,Customer Satisfaction,Internal customer success standard,score / %,Internal target,Client service standard,Medium,Yes,Overall client satisfaction.
+Professional Services SME,Service Quality,Internal customer success standard,score / %,Internal target,Client service standard,Medium,Yes,How well delivery quality meets the promise made in sales.
+Professional Services SME,Product Adoption,Internal customer success standard,% / score,Internal target,Client service standard,Medium,Yes,Use this as service adoption or engagement where no product exists.
+Professional Services SME,Renewal Engagement,Internal customer success standard,score / %,Internal target,Client service standard,Medium,Yes,Timeliness and quality of renewal or re-engagement activity.
+Professional Services SME,Save Effectiveness,Internal customer success standard,%,Internal target,Client service standard,Medium,Yes,Ability to retain at-risk clients or renewers.
+Professional Services SME,Account Management Quality,Internal account-growth standard,score / %,Internal target,Account management standard,Medium,Yes,How well client relationships are protected and grown.
+Professional Services SME,Upsell / Cross-Sell Conversion,Internal account-growth standard,%,Internal target,Account growth standard,Medium,Yes,Conversion of existing-client expansion opportunities.
+Professional Services SME,Customer Value Realization,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,Whether clients are clearly experiencing value from the engagement.
+Professional Services SME,Product Adoption Depth,Internal account-growth standard,score / %,Internal target,Account growth standard,Medium,Yes,Use as depth of service adoption / scope penetration.
+Professional Services SME,Expansion Offer Relevance,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,How well added services match client need.
+Professional Services SME,Credit Control,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Strength of credit and collections control.
+Professional Services SME,Collection Follow-Up Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of chasing overdue invoices.
+Professional Services SME,Dispute Resolution Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of resolving fee or billing disputes.
+Professional Services SME,Payment Terms Discipline,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Consistency of setting and enforcing payment terms.
+Professional Services SME,Customer Payment Behaviour,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Reliability of clients paying on time.
+Trade / Distribution SME,Wholesale gross margin,12.76,%,External,CSIMarket Wholesale Industry Q1 2026,Medium,Yes,Use as current industry context benchmark; CSIMarket also shows TTM gross margin around 12.93%.
+Trade / Distribution SME,Wholesale gross margin TTM,12.93,%,External,CSIMarket Wholesale Industry TTM 2026,Medium,Yes,Trailing-twelve-month context benchmark for wholesale industry profitability.
+Trade / Distribution SME,DSO target band,30-50,days,External-Hybrid,CreditPulse Wholesale Distribution DSO benchmark 2025,Medium,Yes,Use as a collections benchmark band rather than a single hard number.
+Trade / Distribution SME,Inventory turn benchmark family,No fixed universal default,turns,External-Hybrid,NetSuite wholesale distribution benchmarking guidance,Medium,Yes,"Inventory turn is a core wholesale benchmark, but exact target depends on product category and stock model."
+Trade / Distribution SME,Fill rate benchmark family,No fixed universal default,%,External-Hybrid,NetSuite wholesale distribution benchmarking guidance,Medium,Yes,"Fill rate is a core wholesale benchmark, but exact target depends on channel and SKU mix."
+Trade / Distribution SME,Qualified Lead Volume Leakage,No fixed external default,client-specific target,Client-specific,Client revenue plan / sales capacity model,High,Yes,Better set from customer acquisition plan than public benchmark.
+Trade / Distribution SME,Qualified Lead-to-Win Conversion Leakage,20-30,%,Hybrid,Starting default for B2B trade / wholesale SMEs,Low,Yes,Useful profile default; override with actual history where available.
+Trade / Distribution SME,Average Deal Size Leakage,No universal number,currency,Hybrid,Profile default by product mix / account type,Low,Yes,"Strongly depends on category, account size, and order profile."
+Trade / Distribution SME,Pricing / Discount Leakage tolerance,3-7,% allowed discount band,Internal threshold,Commercial policy / internal control,Medium,Yes,Use as internal pricing control threshold.
+Trade / Distribution SME,Unbilled / Uninvoiced Revenue Leakage tolerance,0-2,% of monthly revenue,Internal threshold,Operational control threshold,Medium,Yes,Lower tolerance than many services businesses because order-to-invoice should be faster.
+Trade / Distribution SME,Billing Error / Credit Note Leakage tolerance,0-1,% of billed revenue,Internal threshold,Finance / billing control threshold,Medium,Yes,Billing and order correction quality tolerance.
+Trade / Distribution SME,Revenue Churn Leakage,5-10,% annual revenue churn band,Hybrid,Directional account-retention band for B2B wholesale/distribution,Low,Yes,Use directionally; many firms monitor customer retention more directly.
+Trade / Distribution SME,Expansion Revenue Gap,3-10,% growth target,Hybrid,Starting default for existing-account growth,Low,Yes,Best used as editable default by account model.
+Trade / Distribution SME,Bad Debt / Collections Leakage tolerance,0.5-1.5,% of billed revenue,Internal threshold,Credit control / finance policy,Medium,Yes,Use with DSO as external collections context.
+Trade / Distribution SME,Lead Source Quality,Internal operating standard,score / %,Internal target,Sales and channel operating standard,Medium,Yes,Quality of channels bringing in the right accounts.
+Trade / Distribution SME,Qualified Lead Rate,Internal operating standard,%,Internal target,Sales operating standard,Medium,Yes,Share of enquiries that become genuine sales opportunities.
+Trade / Distribution SME,Response Speed,Internal operating standard,time,Internal target,Sales operating standard,Medium,Yes,How quickly inbound customer interest is handled.
+Trade / Distribution SME,Follow-Up Discipline,Internal operating standard,score / %,Internal target,Sales operating standard,Medium,Yes,"Consistency of follow-up until quote, order, or clear outcome."
+Trade / Distribution SME,Marketing Reach,Internal operating standard,score / volume,Internal target,Marketing operating standard,Medium,Yes,Relevant reach into target customer segments.
+Trade / Distribution SME,Proposal Acceptance,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often quotes or proposals convert forward.
+Trade / Distribution SME,Competitive Loss Rate,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often orders are lost to competitors.
+Trade / Distribution SME,Decision-Maker Access,Internal sales effectiveness standard,% / score,Internal target,Sales effectiveness standard,Medium,Yes,Access to the person who can approve the order or account.
+Trade / Distribution SME,Sales Follow-Up Quality,Internal sales effectiveness standard,score / %,Internal target,Sales effectiveness standard,Medium,Yes,Quality of follow-up after qualification or quote issue.
+Trade / Distribution SME,Pricing Competitiveness,Internal sales effectiveness standard,score,Internal target,Sales effectiveness standard,Medium,Yes,Whether price positioning is competitive without over-discounting.
+Trade / Distribution SME,Discounting,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,How much margin is given away through discounts.
+Trade / Distribution SME,Pricing Discipline,Internal commercial standard,score / %,Internal target,Commercial operating standard,Medium,Yes,Ability to hold target pricing and approval rules.
+Trade / Distribution SME,Upsell / Cross-Sell Rate,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,"Attachment of additional products, ranges, or categories."
+Trade / Distribution SME,Packaging Quality,Internal commercial standard,score,Internal target,Commercial operating standard,Medium,Yes,How clearly the product offer and value proposition are structured.
+Trade / Distribution SME,Contract Term Length,Internal commercial standard,months,Internal target,Commercial operating standard,Medium,Yes,"Use for contract supply, rebate, or recurring account arrangements."
+Trade / Distribution SME,Discount Approval Discipline,Internal policy/process standard,score / %,Internal target,Commercial policy standard,Medium,Yes,Discount governance discipline.
+Trade / Distribution SME,Pricing Governance,Internal policy/process standard,score,Internal target,Commercial policy standard,Medium,Yes,Strength of pricing controls and exception handling.
+Trade / Distribution SME,Quote Accuracy,Internal policy/process standard,%,Internal target,Commercial process standard,Medium,Yes,Accuracy of quotes first time.
+Trade / Distribution SME,Negotiation Discipline,Internal policy/process standard,score,Internal target,Commercial process standard,Medium,Yes,Ability to protect margin in negotiation.
+Trade / Distribution SME,Deal Desk Control,Internal policy/process standard,score / %,Internal target,Commercial process standard,Medium,Yes,Review quality on larger or more complex account deals.
+Trade / Distribution SME,Delivery-to-Billing Handoff,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Quality of order fulfillment handoff into billing.
+Trade / Distribution SME,Invoice Readiness,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Whether shipped orders are ready to invoice immediately.
+Trade / Distribution SME,Timesheet / Usage Capture,Internal operational control standard,%,Internal target,Operations / finance control standard,High,Yes,Use as shipment / delivery proof completeness rather than timesheets.
+Trade / Distribution SME,Billing Workflow Speed,Internal operational control standard,time / score,Internal target,Operations / finance control standard,High,Yes,Speed from dispatch / delivery to invoice issue.
+Trade / Distribution SME,Billing Setup Accuracy,Internal operational control standard,% / score,Internal target,Operations / finance control standard,High,Yes,"Accuracy of customer terms, pricing, and billing setup."
+Trade / Distribution SME,Invoice Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Invoice correctness first time.
+Trade / Distribution SME,Contract-to-Billing Setup Quality,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,"Correct translation of terms, rebates, and pricing into billing."
+Trade / Distribution SME,Order Entry Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Accuracy of order capture before fulfillment and invoicing.
+Trade / Distribution SME,Dispute Rate,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Frequency of invoice or delivery disputes.
+Trade / Distribution SME,Credit Note Approval Discipline,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,"Control quality over credits, returns, and adjustments."
+Trade / Distribution SME,Customer Satisfaction,Internal customer success standard,score / %,Internal target,Customer service standard,Medium,Yes,Overall account satisfaction.
+Trade / Distribution SME,Service Quality,Internal customer success standard,score / %,Internal target,Customer service standard,Medium,Yes,Use as delivery / order service quality in this industry.
+Trade / Distribution SME,Product Adoption,Internal customer success standard,% / score,Internal target,Account development standard,Medium,Yes,Use as range penetration / repeat purchase engagement where relevant.
+Trade / Distribution SME,Renewal Engagement,Internal customer success standard,score / %,Internal target,Account management standard,Medium,Yes,"Use for contract renewals, annual terms, or re-order planning."
+Trade / Distribution SME,Save Effectiveness,Internal customer success standard,%,Internal target,Account retention standard,Medium,Yes,Ability to retain at-risk or declining accounts.
+Trade / Distribution SME,Account Management Quality,Internal account-growth standard,score / %,Internal target,Account management standard,Medium,Yes,How well accounts are protected and grown.
+Trade / Distribution SME,Upsell / Cross-Sell Conversion,Internal account-growth standard,%,Internal target,Account growth standard,Medium,Yes,Conversion of cross-sell and range-expansion opportunities.
+Trade / Distribution SME,Customer Value Realization,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,Whether customers are clearly seeing value from the product and service relationship.
+Trade / Distribution SME,Product Adoption Depth,Internal account-growth standard,score / %,Internal target,Account growth standard,Medium,Yes,Depth of category penetration or product-range uptake.
+Trade / Distribution SME,Expansion Offer Relevance,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,How well added products and offers match customer needs.
+Trade / Distribution SME,Credit Control,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Strength of credit risk control.
+Trade / Distribution SME,Collection Follow-Up Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of chasing overdue invoices.
+Trade / Distribution SME,Dispute Resolution Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of resolving invoice and delivery disputes.
+Trade / Distribution SME,Payment Terms Discipline,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Consistency of setting and enforcing payment terms.
+Trade / Distribution SME,Customer Payment Behaviour,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Reliability of account payments.
+Manufacturing SME,Industrial machinery/components gross margin,37.42,%,External,CSIMarket industrial machinery & components TTM 4Q 2025,Medium,Yes,Useful manufacturing profitability context benchmark; exact applicability depends on product category.
+Manufacturing SME,Chemical manufacturing gross margin,29.42,%,External,CSIMarket chemical manufacturing TTM 4Q 2025,Medium,Yes,Context benchmark for process/chemical-style manufacturing segments.
+Manufacturing SME,Food processing gross margin,33.02,%,External,CSIMarket food processing 1Q 2026,Medium,Yes,Context benchmark for food manufacturing segments.
+Manufacturing SME,DSO target band,45-75,days,External-Hybrid,CreditPulse manufacturing DSO benchmark 2025,Medium,Yes,Use as collections benchmark band rather than one fixed number.
+Manufacturing SME,Inventory turnover benchmark family,No fixed universal default,turns,External-Hybrid,NetSuite inventory KPI guidance,Medium,Yes,"Inventory turnover is a core manufacturing/stock benchmark, but exact target depends on product, seasonality, and supply model."
+Manufacturing SME,Days inventory outstanding benchmark family,No fixed universal default,days,External-Hybrid,NetSuite financial/inventory KPI guidance,Medium,Yes,Use as a context metric; target varies by manufacturing segment.
+Manufacturing SME,Qualified Lead Volume Leakage,No fixed external default,client-specific target,Client-specific,Client revenue plan / sales capacity model,High,Yes,Better set from capacity plan and sales goals than public benchmark.
+Manufacturing SME,Qualified Lead-to-Win Conversion Leakage,15-25,%,Hybrid,Manufacturing B2B starting default,Low,Yes,Useful default for longer-cycle B2B manufacturing sales; override with client history.
+Manufacturing SME,Average Deal Size Leakage,No universal number,currency,Hybrid,Profile default by product / customer segment,Low,Yes,"Strongly dependent on product mix, batch size, and customer type."
+Manufacturing SME,Pricing / Discount Leakage tolerance,3-7,% allowed discount band,Internal threshold,Commercial policy / internal control,Medium,Yes,Use as internal pricing control threshold.
+Manufacturing SME,Unbilled / Uninvoiced Revenue Leakage tolerance,0-3,% of monthly revenue,Internal threshold,Operational control threshold,Medium,Yes,Use as order-to-cash / shipment-to-invoice control threshold.
+Manufacturing SME,Billing Error / Credit Note Leakage tolerance,0-1,% of billed revenue,Internal threshold,Finance / billing control threshold,Medium,Yes,Billing quality tolerance.
+Manufacturing SME,Revenue Churn Leakage,5-10,% annual revenue churn band,Hybrid,Directional customer retention band for manufacturing accounts,Low,Yes,Use directionally; repeat order retention often matters more than formal churn.
+Manufacturing SME,Expansion Revenue Gap,3-10,% growth target,Hybrid,Starting default for existing-account growth,Low,Yes,Best used as editable default by account model.
+Manufacturing SME,Bad Debt / Collections Leakage tolerance,0.5-1.5,% of billed revenue,Internal threshold,Credit control / finance policy,Medium,Yes,Use with DSO as external collections context.
+Manufacturing SME,Lead Source Quality,Internal operating standard,score / %,Internal target,Sales and channel operating standard,Medium,Yes,Quality of channels producing credible manufacturing opportunities.
+Manufacturing SME,Qualified Lead Rate,Internal operating standard,%,Internal target,Sales operating standard,Medium,Yes,Share of enquiries that become genuine qualified opportunities.
+Manufacturing SME,Response Speed,Internal operating standard,time,Internal target,Sales operating standard,Medium,Yes,How quickly inbound customer interest is handled.
+Manufacturing SME,Follow-Up Discipline,Internal operating standard,score / %,Internal target,Sales operating standard,Medium,Yes,"Consistency of follow-up until quote, order, or clear outcome."
+Manufacturing SME,Marketing Reach,Internal operating standard,score / volume,Internal target,Marketing operating standard,Medium,Yes,Relevant reach into the target buyer base.
+Manufacturing SME,Proposal Acceptance,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often quotes or proposals convert forward.
+Manufacturing SME,Competitive Loss Rate,Internal sales effectiveness standard,%,Internal target,Sales effectiveness standard,Medium,Yes,How often business is lost to competitors.
+Manufacturing SME,Decision-Maker Access,Internal sales effectiveness standard,% / score,Internal target,Sales effectiveness standard,Medium,Yes,Access to the buyer who can approve orders or contracts.
+Manufacturing SME,Sales Follow-Up Quality,Internal sales effectiveness standard,score / %,Internal target,Sales effectiveness standard,Medium,Yes,Quality of follow-up after qualification or quote issue.
+Manufacturing SME,Pricing Competitiveness,Internal sales effectiveness standard,score,Internal target,Sales effectiveness standard,Medium,Yes,Whether price positioning is competitive without excessive discounting.
+Manufacturing SME,Discounting,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,How much price value is being conceded through discounting.
+Manufacturing SME,Pricing Discipline,Internal commercial standard,score / %,Internal target,Commercial operating standard,Medium,Yes,Ability to hold target pricing and approval rules.
+Manufacturing SME,Upsell / Cross-Sell Rate,Internal commercial standard,%,Internal target,Commercial operating standard,Medium,Yes,"Attachment of extra products, lines, or service add-ons."
+Manufacturing SME,Packaging Quality,Internal commercial standard,score,Internal target,Commercial operating standard,Medium,Yes,How clearly the offer is structured and positioned for value.
+Manufacturing SME,Contract Term Length,Internal commercial standard,months,Internal target,Commercial operating standard,Medium,Yes,"Commercial strength of order agreements, supply terms, or recurring contracts."
+Manufacturing SME,Discount Approval Discipline,Internal policy/process standard,score / %,Internal target,Commercial policy standard,Medium,Yes,Discount governance discipline.
+Manufacturing SME,Pricing Governance,Internal policy/process standard,score,Internal target,Commercial policy standard,Medium,Yes,Strength of pricing controls and exception handling.
+Manufacturing SME,Quote Accuracy,Internal policy/process standard,%,Internal target,Commercial process standard,Medium,Yes,Accuracy of quotes first time.
+Manufacturing SME,Negotiation Discipline,Internal policy/process standard,score,Internal target,Commercial process standard,Medium,Yes,Ability to protect margin in negotiation.
+Manufacturing SME,Deal Desk Control,Internal policy/process standard,score / %,Internal target,Commercial process standard,Medium,Yes,Review quality on larger or more complex deals.
+Manufacturing SME,Delivery-to-Billing Handoff,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Quality of handoff from production / dispatch into billing.
+Manufacturing SME,Invoice Readiness,Internal operational control standard,score / %,Internal target,Operations / finance control standard,High,Yes,Whether completed or shipped orders are ready to invoice without delay.
+Manufacturing SME,Timesheet / Usage Capture,Internal operational control standard,%,Internal target,Operations / finance control standard,High,Yes,Use as production / dispatch / usage record completeness rather than timesheets.
+Manufacturing SME,Billing Workflow Speed,Internal operational control standard,time / score,Internal target,Operations / finance control standard,High,Yes,Speed from shipment or completion to invoice issue.
+Manufacturing SME,Billing Setup Accuracy,Internal operational control standard,% / score,Internal target,Operations / finance control standard,High,Yes,"Accuracy of customer terms, rates, and billing setup."
+Manufacturing SME,Invoice Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,Invoice correctness first time.
+Manufacturing SME,Contract-to-Billing Setup Quality,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,"Correct translation of terms, pricing, and rebate logic into billing."
+Manufacturing SME,Order Entry Accuracy,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,"Accuracy of order capture before production, dispatch, and invoicing."
+Manufacturing SME,Dispute Rate,Internal finance control standard,%,Internal target,Finance control standard,High,Yes,"Frequency of invoice, quantity, price, or delivery disputes."
+Manufacturing SME,Credit Note Approval Discipline,Internal finance control standard,score / %,Internal target,Finance control standard,High,Yes,"Control quality over credits, returns, and billing adjustments."
+Manufacturing SME,Customer Satisfaction,Internal customer success standard,score / %,Internal target,Customer service standard,Medium,Yes,Overall account satisfaction.
+Manufacturing SME,Service Quality,Internal customer success standard,score / %,Internal target,Customer service standard,Medium,Yes,Use as delivery / order service quality in this industry.
+Manufacturing SME,Product Adoption,Internal customer success standard,% / score,Internal target,Account development standard,Medium,Yes,Use as product usage / repeat-order engagement where relevant.
+Manufacturing SME,Renewal Engagement,Internal customer success standard,score / %,Internal target,Account management standard,Medium,Yes,"Use for annual supply terms, re-order planning, or contract renewals."
+Manufacturing SME,Save Effectiveness,Internal customer success standard,%,Internal target,Account retention standard,Medium,Yes,Ability to retain at-risk accounts or declining customers.
+Manufacturing SME,Account Management Quality,Internal account-growth standard,score / %,Internal target,Account management standard,Medium,Yes,How well accounts are protected and grown.
+Manufacturing SME,Upsell / Cross-Sell Conversion,Internal account-growth standard,%,Internal target,Account growth standard,Medium,Yes,Conversion of line-extension or added-product opportunities.
+Manufacturing SME,Customer Value Realization,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,Whether customers are clearly realizing value from the product / supply relationship.
+Manufacturing SME,Product Adoption Depth,Internal account-growth standard,score / %,Internal target,Account growth standard,Medium,Yes,Depth of product-range or category penetration.
+Manufacturing SME,Expansion Offer Relevance,Internal account-growth standard,score,Internal target,Account growth standard,Medium,Yes,How well added offers fit customer need.
+Manufacturing SME,Credit Control,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Strength of credit risk control.
+Manufacturing SME,Collection Follow-Up Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of chasing overdue invoices.
+Manufacturing SME,Dispute Resolution Speed,Internal collections standard,time / score,Internal target,Finance / collections standard,High,Yes,Speed of resolving invoice and delivery disputes.
+Manufacturing SME,Payment Terms Discipline,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Consistency of setting and enforcing payment terms.
+Manufacturing SME,Customer Payment Behaviour,Internal collections standard,score / %,Internal target,Finance / collections standard,High,Yes,Reliability of account payments.

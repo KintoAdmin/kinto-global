@@ -1,0 +1,16 @@
+logic_area,target_field,formula_or_rule
+Question level,score_pct,(score_value / 5) * 100
+Question level,severity_band,If score_value <= 2 => Critical / Weak; if score_value = 3 => Developing; if score_value >= 4 => Strong / Managed
+Domain level,domain_avg_score,SUM(score_value * question_weight) / SUM(question_weight)
+Domain level,domain_pct,(domain_avg_score / 5) * 100
+Domain level,domain_severity_band,If domain_avg_score < 3 => Critical / Weak; if domain_avg_score >= 3 and < 4 => Developing; if domain_avg_score >= 4 => Strong / Managed
+Domain level,score_trigger_band,1-2 if domain_avg_score < 3; 3 if domain_avg_score >= 3 and < 4; 4-5 if domain_avg_score >= 4
+Domain level,triggered_finding_id,Match domain_id + score_trigger_band in findings library
+Domain level,triggered_recommendation_id,Use finding_id to fetch recommendation_id
+Domain level,triggered_actions,Use recommendation_id to fetch all related actions
+Module level,overall_score,SUM(domain_avg_score * domain_weight_pct) / 100
+Module level,overall_pct,(overall_score / 5) * 100
+Module level,overall_severity_band,0-40 Critical foundation risk; 41-60 Weak foundation; 61-75 Developing foundation; 76-89 Strong foundation; 90-100 Controlled foundation
+Ranking,top_risks,"Rank by weakest severity band, then highest domain weight, then major issue flags"
+Ranking,priority_actions,"Rank by Phase 1 first, then High priority, then highest-weight domain, then lowest current score"
+Completion,session_complete,completed_question_count / total_active_question_count = 100%

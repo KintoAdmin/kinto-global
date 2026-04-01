@@ -1,0 +1,9 @@
+Domain ID,Domain Name,Description,Weight %,Audit Module
+D01,Source of Truth & System Architecture,"Tests whether the business has a formally governed source system for leads, opportunities, customers, invoices, renewals, and management KPIs, rather than conflicting CRM exports, finance files, and shadow spreadsheets.",15,Kinto Data Foundation Audit
+D02,Data Capture Discipline,"Tests whether users capture required ownership, stage, date, amount, status, and next-step data at the point where work happens, instead of correcting records only when reporting is due.",15,Kinto Data Foundation Audit
+D03,Data Quality & Integrity,"Tests whether account, contact, deal, invoice, and service records are complete, current, deduplicated, and categorised consistently enough to support funnel, forecast, billing, cash, and retention reporting.",20,Kinto Data Foundation Audit
+D04,Workflow Visibility in Data,"Tests whether the data shows the full lifecycle from lead through qualification, proposal, close, invoicing, payment, onboarding, and renewal, including handoffs, aging, backlog, and drop-off.",15,Kinto Data Foundation Audit
+D05,KPI & Metric Logic,"Tests whether core management KPIs have approved formulas, inclusion rules, targets, owners, and refresh logic so the same metric means the same thing across dashboards and reports.",15,Kinto Data Foundation Audit
+D06,Reporting & Dashboard Maturity,"Tests whether dashboards and management packs are built from trusted data, focused on decisions and exceptions, and consistent across leadership, managers, and operating teams.",10,Kinto Data Foundation Audit
+D07,Governance & Ownership,"Tests whether named owners, SOPs, review cadence, change control, and issue-resolution routines exist to keep data, KPI logic, and reporting accurate over time.",10,Kinto Data Foundation Audit
+,,Total,=SUM(D2:D8)
