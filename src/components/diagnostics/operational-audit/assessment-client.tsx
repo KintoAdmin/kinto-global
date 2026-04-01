@@ -2,6 +2,7 @@
 // Kinto Global — Operational Audit Assessment Client v2
 'use client';
 
+import { ModuleIntro } from '@/components/onboarding/module-intro';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ScoreButtonGroup } from '@/components/shared/score-button-group';
