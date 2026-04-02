@@ -6,9 +6,12 @@ import { computeAndPersistDataFoundation } from "@/lib/services/data-foundation"
 import { computeAndPersistAiReadiness } from "@/lib/services/ai-readiness";
 import { computeAndPersistAiUsecases } from "@/lib/services/ai-usecase";
 import { computeAndPersistCombinedRoadmap } from "@/lib/services/roadmap";
+import { computeAndPersistBusinessReadiness } from "@/lib/services/business-readiness";
 
 export async function computeModuleSummary(assessmentId: string, moduleCode: ModuleCode) {
   switch (moduleCode) {
+    case "BR":
+      return computeAndPersistBusinessReadiness(assessmentId);
     case "LEAK":
       return computeAndPersistLeakage(assessmentId);
     case "OPS":

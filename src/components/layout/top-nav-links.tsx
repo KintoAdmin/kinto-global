@@ -11,6 +11,12 @@ const groups = [
     ]
   },
   {
+    label: 'Readiness',
+    links: [
+      { href: '/readiness/business-readiness', label: 'Business Readiness' }
+    ]
+  },
+  {
     label: 'Diagnostics',
     links: [
       { href: '/diagnostics/operational-audit', label: 'Operational Audit' },

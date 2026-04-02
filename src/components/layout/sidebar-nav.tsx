@@ -15,6 +15,12 @@ const NAV = [
     ],
   },
   {
+    section: 'Readiness',
+    links: [
+      { href: '/readiness/business-readiness', label: 'Business Readiness', icon: '🚀' },
+    ],
+  },
+  {
     section: 'Diagnostics',
     links: [
       { href: '/diagnostics/operational-audit', label: 'Operational Audit', icon: '🔍' },

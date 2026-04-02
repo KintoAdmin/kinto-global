@@ -4,6 +4,7 @@ import { getWorkspaceSnapshot } from '@/lib/services/workspace';
 
 function moduleHref(code: string, clientId?: string | null, assessmentId?: string | null) {
   const map: Record<string, string> = {
+    BR: '/readiness/business-readiness',
     OPS: '/diagnostics/operational-audit',
     LEAK: '/diagnostics/revenue-leakage',
     DATA: '/diagnostics/data-foundation',
@@ -21,7 +22,7 @@ function moduleHref(code: string, clientId?: string | null, assessmentId?: strin
 
 function moduleIcon(code: string) {
   const icons: Record<string, string> = {
-    OPS: '🔍', LEAK: '💰', DATA: '🗄️', AIR: '🤖', AIUC: '⚡', ROADMAP: '🗺️',
+    BR: '🚀', OPS: '🔍', LEAK: '💰', DATA: '🗄️', AIR: '🤖', AIUC: '⚡', ROADMAP: '🗺️',
   };
   return icons[code] || '📊';
 }
@@ -47,11 +48,11 @@ export async function ModuleSummaryCards({ assessmentId, clientId }: Props = {})
   const aId = snapshot.assessment?.assessment_id || assessmentId || null;
   const cId = snapshot.client?.client_id || clientId || null;
   const items = snapshot.modules || [];
-  const diagnostic = items.filter((m: any) => m.module_code !== 'ROADMAP');
+  const coreModules = items.filter((m: any) => m.module_code !== 'ROADMAP');
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
-      {diagnostic.map((item: any) => {
+      {coreModules.map((item: any) => {
         const scorePct = Math.round(Number(item.score_pct || 0));
         const completionPct = Math.round(Number(item.completion_pct || 0));
         const displayPct = scorePct > 0 ? scorePct : completionPct;

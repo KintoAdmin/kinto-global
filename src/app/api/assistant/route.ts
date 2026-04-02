@@ -56,7 +56,7 @@ async function buildContext(assessmentId?: string, clientId?: string): Promise<s
     }
 
     if (assessmentId) {
-      const codes = ['OPS', 'LEAK', 'DATA', 'AIR', 'AIUC'] as const;
+      const codes = ['BR', 'OPS', 'LEAK', 'DATA', 'AIR', 'AIUC'] as const;
       const snaps = await Promise.allSettled(codes.map(c => getModuleSnapshot(assessmentId, c).catch(() => null)));
       lines.push('\nDetail:');
       codes.forEach((code, i) => {
@@ -89,7 +89,7 @@ const PROMPTS: Record<Mode, string> = {
 Answer questions about how the platform works, what modules cover, what features do, and how to interpret results.
 
 Platform knowledge:
-- Five modules: Operational Audit (OPS), Revenue Leakage (LEAK), Data Foundation (DATA), AI Readiness (AIR), AI Use Cases (AIUC)
+- Six modules: Business Readiness (BR), Operational Audit (OPS), Revenue Leakage (LEAK), Data Foundation (DATA), AI Readiness (AIR), AI Use Cases (AIUC)
 - Scores: 1–5 per question → percentage → band: Critical/Weak <40%, Developing 40–65%, Managed 65–80%, Strong 80%+
 - Diagnostic score and implementation progress are always kept separate — scoring findings versus executing improvements
 - Advisory tab per module shows findings, recommendations, actions in priority order

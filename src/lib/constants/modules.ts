@@ -1,27 +1,30 @@
 // @ts-nocheck
-export type ModuleCode = "OPS" | "LEAK" | "DATA" | "AIR" | "AIUC" | "ROADMAP";
+export type ModuleCode = "BR" | "OPS" | "LEAK" | "DATA" | "AIR" | "AIUC" | "ROADMAP";
 
-export type ModuleRouteKey = "ops" | "leak" | "data" | "air" | "aiuc" | "roadmap";
+export type ModuleRouteKey = "br" | "ops" | "leak" | "data" | "air" | "aiuc" | "roadmap";
 
 export const MODULE_REGISTRY = [
-  { module_id: "MOD-OPS", module_code: "OPS", module_name: "Operational Audit", display_order: 1, is_active: true },
-  { module_id: "MOD-LEAK", module_code: "LEAK", module_name: "Revenue Leakage", display_order: 2, is_active: true },
-  { module_id: "MOD-DATA", module_code: "DATA", module_name: "Data Foundation", display_order: 3, is_active: true },
-  { module_id: "MOD-AIR", module_code: "AIR", module_name: "AI Readiness", display_order: 4, is_active: true },
-  { module_id: "MOD-AIUC", module_code: "AIUC", module_name: "AI Use Case Prioritisation", display_order: 5, is_active: true },
-  { module_id: "MOD-ROADMAP", module_code: "ROADMAP", module_name: "Combined Transformation Roadmap", display_order: 6, is_active: true }
+  { module_id: "MOD-BR", module_code: "BR", module_name: "Business Readiness", display_order: 1, is_active: true },
+  { module_id: "MOD-OPS", module_code: "OPS", module_name: "Operational Audit", display_order: 2, is_active: true },
+  { module_id: "MOD-LEAK", module_code: "LEAK", module_name: "Revenue Leakage", display_order: 3, is_active: true },
+  { module_id: "MOD-DATA", module_code: "DATA", module_name: "Data Foundation", display_order: 4, is_active: true },
+  { module_id: "MOD-AIR", module_code: "AIR", module_name: "AI Readiness", display_order: 5, is_active: true },
+  { module_id: "MOD-AIUC", module_code: "AIUC", module_name: "AI Use Case Prioritisation", display_order: 6, is_active: true },
+  { module_id: "MOD-ROADMAP", module_code: "ROADMAP", module_name: "Combined Transformation Roadmap", display_order: 7, is_active: true }
 ] as const;
 
 export const MODULE_BY_CODE: Record<ModuleCode, (typeof MODULE_REGISTRY)[number]> = {
-  OPS: MODULE_REGISTRY[0],
-  LEAK: MODULE_REGISTRY[1],
-  DATA: MODULE_REGISTRY[2],
-  AIR: MODULE_REGISTRY[3],
-  AIUC: MODULE_REGISTRY[4],
-  ROADMAP: MODULE_REGISTRY[5]
+  BR: MODULE_REGISTRY[0],
+  OPS: MODULE_REGISTRY[1],
+  LEAK: MODULE_REGISTRY[2],
+  DATA: MODULE_REGISTRY[3],
+  AIR: MODULE_REGISTRY[4],
+  AIUC: MODULE_REGISTRY[5],
+  ROADMAP: MODULE_REGISTRY[6]
 };
 
 export const MODULE_CODE_BY_ROUTE: Record<ModuleRouteKey, ModuleCode> = {
+  br: "BR",
   ops: "OPS",
   leak: "LEAK",
   data: "DATA",
@@ -31,6 +34,7 @@ export const MODULE_CODE_BY_ROUTE: Record<ModuleRouteKey, ModuleCode> = {
 };
 
 export const ROUTE_BY_MODULE_CODE: Record<ModuleCode, ModuleRouteKey> = {
+  BR: "br",
   OPS: "ops",
   LEAK: "leak",
   DATA: "data",
