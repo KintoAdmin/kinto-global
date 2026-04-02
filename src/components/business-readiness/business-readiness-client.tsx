@@ -1,37 +1,44 @@
-// @ts-nocheck
 'use client';
+// @ts-nocheck
 
 import { useEffect, useMemo, useState } from 'react';
 
-function withAid(path: string, aid?: string | null) {
-  if (!aid) return path;
-  return `${path}${path.includes('?') ? '&' : '?'}assessmentId=${encodeURIComponent(aid)}`;
+type Props = { assessmentId?: string | null; initialData?: any; view?: string; };
+
+function statusBadgeClass(ok: boolean) {
+  return ok ? 'badge-good' : 'badge-warn';
 }
 
-function statusBadgeClass(flag?: boolean) {
-  return flag ? 'badge-success' : 'badge-warn';
+function taskStatusLabel(status?: string | null) {
+  return String(status || 'not_started').replaceAll('_', ' ');
 }
 
-export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { assessmentId?: string | null; view?: string }) {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+function readinessLabel(state?: string | null) {
+  const raw = String(state || 'not_started');
+  return raw === 'set_up' ? 'Set up' : raw.replaceAll('_', ' ');
+}
+
+export function BusinessReadinessClient({ assessmentId, initialData, view = 'overview' }: Props) {
+  const [data, setData] = useState<any>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     businessTypeCode: 'professional_services',
     primaryRegionCode: 'south_africa',
-    subRegionCode: '',
     businessName: '',
     founderName: '',
-    whatYouSell: '',
     targetCustomer: '',
+    whatYouSell: '',
   });
+  const [evidenceDrafts, setEvidenceDrafts] = useState<Record<string, string>>({});
 
   async function load() {
+    if (!assessmentId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(withAid('/api/business-readiness', assessmentId), { cache: 'no-store' });
+      const res = await fetch(`/api/business-readiness?assessmentId=${encodeURIComponent(assessmentId)}`, { cache: 'no-store' });
       const payload = await res.json();
       if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to load Business Readiness.');
       setData(payload.data || payload);
@@ -42,16 +49,28 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
     }
   }
 
-  useEffect(() => { load(); }, [assessmentId]);
+  useEffect(() => {
+    if (!initialData && assessmentId) load();
+  }, [assessmentId]);
 
   async function initializeWorkspace() {
+    if (!assessmentId) return;
     setSaving(true);
     setError(null);
     try {
       const res = await fetch('/api/business-readiness', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'initialize', assessmentId, ...form, businessDescription: form.whatYouSell }),
+        body: JSON.stringify({
+          action: 'initialize',
+          assessmentId,
+          businessTypeCode: form.businessTypeCode,
+          primaryRegionCode: form.primaryRegionCode,
+          businessName: form.businessName,
+          founderName: form.founderName,
+          targetCustomer: form.targetCustomer,
+          whatYouSell: form.whatYouSell,
+        }),
       });
       const payload = await res.json();
       if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to initialize Business Readiness.');
@@ -63,10 +82,75 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
     }
   }
 
+  async function updateTask(taskInstanceId: string, status: string) {
+    if (!assessmentId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/business-readiness/task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId, taskInstanceId, status }),
+      });
+      const payload = await res.json();
+      if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to update task.');
+      setData(payload.data || payload);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update task.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveEvidence(taskInstanceId: string) {
+    if (!assessmentId) return;
+    const noteText = String(evidenceDrafts[taskInstanceId] || '').trim();
+    if (!noteText) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/business-readiness/evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId, taskInstanceId, noteText, evidenceType: 'note', replaceExisting: true }),
+      });
+      const payload = await res.json();
+      if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to save evidence.');
+      setData(payload.data || payload);
+      setEvidenceDrafts((current) => ({ ...current, [taskInstanceId]: '' }));
+    } catch (err: any) {
+      setError(err?.message || 'Failed to save evidence.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function runLaunchCheck() {
+    if (!assessmentId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/business-readiness/launch-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId }),
+      });
+      const payload = await res.json();
+      if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to run launch check.');
+      setData(payload.data || payload);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to run launch check.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const blockers = data?.blockers || [];
   const domains = data?.domainStates || [];
   const phases = data?.phaseStates || [];
+  const tasks = data?.tasks || [];
   const nextActions = data?.nextActions || [];
+  const evidence = data?.evidence || [];
 
   const groupedDomains = useMemo(() => {
     const byPhase: Record<string, any[]> = {};
@@ -77,6 +161,25 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
     }
     return byPhase;
   }, [domains]);
+
+  const groupedTasks = useMemo(() => {
+    const byDomain: Record<string, any[]> = {};
+    for (const row of tasks) {
+      const key = row.domain_code || 'd01_business_definition';
+      if (!byDomain[key]) byDomain[key] = [];
+      byDomain[key].push(row);
+    }
+    return byDomain;
+  }, [tasks]);
+
+  const evidenceByTask = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const row of evidence) {
+      if (!map[row.task_instance_id]) map[row.task_instance_id] = [];
+      map[row.task_instance_id].push(row);
+    }
+    return map;
+  }, [evidence]);
 
   if (loading) return <div className="card"><div className="card-title">Loading Business Readiness…</div></div>;
   if (error) return <div className="card"><div className="card-title">Business Readiness</div><p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p></div>;
@@ -139,11 +242,12 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
       </div>
 
       <div className="card">
-        <div className="card-header">
+        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
           <div>
             <h3 className="card-title">Sponsor summary</h3>
             <p className="card-subtitle">Plain-English view of where the business stands right now.</p>
           </div>
+          <button className="btn btn-secondary" onClick={runLaunchCheck} disabled={saving}>{saving ? 'Working…' : 'Run launch check'}</button>
         </div>
         <p style={{ margin: 0, color: 'var(--text)' }}>{data.sponsorSummary}</p>
       </div>
@@ -181,7 +285,8 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                         <div>
                           <div style={{ fontWeight: 600 }}>{row.domain_name}</div>
-                          <div className="text-xs muted-2">State: {String(row.readiness_state || 'not_started').replaceAll('_', ' ')}</div>
+                          <div className="text-xs muted-2">State: {readinessLabel(row.readiness_state)}</div>
+                          {!!row.next_required_task_code && <div className="text-xs muted-2">Next task: {row.next_required_task_code}</div>}
                         </div>
                         {row.launch_critical ? <span className="badge badge-warn">Launch-critical</span> : <span className="badge badge-muted">Supporting</span>}
                       </div>
@@ -190,6 +295,69 @@ export function BusinessReadinessClient({ assessmentId, view = 'overview' }: { a
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {(view === 'overview' || view === 'tasks') && (
+        <div className="card">
+          <div className="card-header"><div><h3 className="card-title">Tasks and proof</h3><p className="card-subtitle">Mark steps done and add simple evidence notes for proof-sensitive tasks.</p></div></div>
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {domains.map((domain: any) => {
+              const taskRows = groupedTasks[domain.domain_code] || [];
+              if (!taskRows.length) return null;
+              return (
+                <div key={domain.domain_code} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '0.85rem', background: 'var(--surface)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{domain.domain_name}</div>
+                      <div className="text-xs muted-2">{readinessLabel(domain.readiness_state)} • {Math.round(Number(domain.percent_complete || 0))}% complete</div>
+                    </div>
+                    {domain.launch_critical ? <span className="badge badge-warn">Launch-critical</span> : null}
+                  </div>
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    {taskRows.map((task: any) => {
+                      const taskEvidence = evidenceByTask[task.task_instance_id] || [];
+                      return (
+                        <div key={task.task_instance_id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{task.task_name}</div>
+                              <div className="text-xs muted-2">{task.task_description}</div>
+                              <div className="text-xs muted-2">Role: {task.task_role} • Status: {taskStatusLabel(task.status)}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                              {task.can_block_launch ? <span className="badge badge-warn">Blocks launch</span> : <span className="badge badge-muted">Internal</span>}
+                              {task.evidence_required_flag ? <span className="badge badge-info">Proof needed</span> : null}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                            <button className="btn btn-secondary" onClick={() => updateTask(task.task_instance_id, 'in_progress')} disabled={saving || task.status === 'in_progress'}>Start</button>
+                            <button className="btn btn-primary" onClick={() => updateTask(task.task_instance_id, 'done')} disabled={saving || task.status === 'done'}>Mark done</button>
+                            {task.status === 'done' ? <button className="btn btn-secondary" onClick={() => updateTask(task.task_instance_id, 'not_started')} disabled={saving}>Reopen</button> : null}
+                          </div>
+                          <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem' }}>
+                            <div className="text-xs muted-2">Proof / evidence</div>
+                            <textarea className="input" rows={3} value={evidenceDrafts[task.task_instance_id] ?? ''} onChange={(e) => setEvidenceDrafts((current) => ({ ...current, [task.task_instance_id]: e.target.value }))} placeholder={task.evidence_required_flag ? 'Add a note describing the proof or link you have for this step.' : 'Add a simple note if you want to capture proof or context.'} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                              <div className="text-xs muted-2">{taskEvidence.length ? `${taskEvidence.length} proof item(s) saved` : 'No proof saved yet'}</div>
+                              <button className="btn btn-secondary" onClick={() => saveEvidence(task.task_instance_id)} disabled={saving || !String(evidenceDrafts[task.task_instance_id] || '').trim()}>Save proof note</button>
+                            </div>
+                            {taskEvidence.length ? (
+                              <div style={{ display: 'grid', gap: '0.4rem' }}>
+                                {taskEvidence.slice(0, 2).map((item: any) => (
+                                  <div key={item.evidence_id} className="text-xs muted-2" style={{ padding: '0.5rem', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>{item.note_text || item.external_link || item.file_url || 'Proof item saved'}</div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

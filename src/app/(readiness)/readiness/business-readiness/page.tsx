@@ -18,6 +18,7 @@ export default async function BusinessReadinessPage({ searchParams }: PageProps)
   const tabs = [
     { key: 'overview', label: 'Overview' },
     { key: 'phases', label: 'Phases' },
+    { key: 'tasks', label: 'Tasks' },
     { key: 'blockers', label: 'Blockers' },
   ];
 
