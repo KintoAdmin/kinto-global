@@ -5,49 +5,44 @@ import { useEffect, useMemo, useState } from 'react';
 
 type Props = { assessmentId?: string | null; initialData?: any; view?: string };
 
-const TASK_FILTERS = [
-  { key: 'all', label: 'All tasks' },
-  { key: 'do_now', label: 'Do now' },
-  { key: 'blockers', label: 'Launch blockers' },
-  { key: 'proof', label: 'Proof needed' },
-  { key: 'done', label: 'Done' },
-];
-
-function statusBadgeClass(ok: boolean) {
-  return ok ? 'badge-good' : 'badge-warn';
+function phaseLabel(code?: string | null, phaseStates?: any[]) {
+  const row = (phaseStates || []).find((item: any) => item.phase_code === code);
+  return row?.phase_name || '—';
 }
 
-function taskStatusLabel(status?: string | null) {
-  return String(status || 'not_started').replaceAll('_', ' ');
-}
-
-function titleCase(raw?: string | null) {
-  return String(raw || '')
-    .replaceAll('_', ' ')
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function readinessLabel(state?: string | null) {
-  const raw = String(state || 'not_started');
-  return raw === 'set_up' ? 'Set up' : titleCase(raw);
-}
-
-function phaseBadgeLabel(phaseCode?: string | null, phases?: any[]) {
-  const row = (phases || []).find((item: any) => item.phase_code === phaseCode);
-  if (row?.phase_name) return row.phase_name;
-  const raw = String(phaseCode || '').replace('phase_', '');
+function sentenceCase(value?: string | null) {
+  const raw = String(value || '').replaceAll('_', ' ');
   if (!raw) return '—';
-  return `Phase ${raw.split('_')[0]} — ${titleCase(raw.split('_').slice(1).join(' '))}`;
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
-function viewLink(nextView: string) {
-  if (typeof window === 'undefined') return;
-  const url = new URL(window.location.href);
-  url.searchParams.set('view', nextView);
-  window.location.href = url.toString();
+function badgeTone(status?: string | null) {
+  const raw = String(status || '').toLowerCase();
+  if (raw === 'complete' || raw === 'done' || raw === 'set_up') return { bg: '#dcfce7', color: '#166534' };
+  if (raw === 'in_progress' || raw === 'started') return { bg: '#fef3c7', color: '#92400e' };
+  if (raw === 'blocked') return { bg: '#fee2e2', color: '#991b1b' };
+  return { bg: '#e5e7eb', color: '#374151' };
+}
+
+function StatusPill({ label }: { label: string }) {
+  const tone = badgeTone(label);
+  return (
+    <span style={{ background: tone.bg, color: tone.color, borderRadius: 999, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
+      {sentenceCase(label)}
+    </span>
+  );
+}
+
+function SmallMuted({ children }: any) {
+  return <div style={{ fontSize: 13, color: '#6b7280' }}>{children}</div>;
+}
+
+function Card({ children }: any) {
+  return <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#fff' }}>{children}</div>;
+}
+
+function SectionTitle({ children }: any) {
+  return <h3 style={{ margin: 0, fontSize: 18 }}>{children}</h3>;
 }
 
 export function BusinessReadinessClient({ assessmentId, initialData, view = 'overview' }: Props) {
@@ -55,7 +50,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [taskFilter, setTaskFilter] = useState('do_now');
+  const [openAction, setOpenAction] = useState<string | null>(null);
   const [form, setForm] = useState({
     businessTypeCode: 'professional_services',
     primaryRegionCode: 'south_africa',
@@ -64,7 +59,6 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     targetCustomer: '',
     whatYouSell: '',
   });
-  const [evidenceDrafts, setEvidenceDrafts] = useState<Record<string, string>>({});
 
   async function load() {
     if (!assessmentId) return;
@@ -85,6 +79,12 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   useEffect(() => {
     if (!initialData && assessmentId) load();
   }, [assessmentId]);
+
+  useEffect(() => {
+    if (!openAction && data?.nextActions?.[0]?.action_code) {
+      setOpenAction(data.nextActions[0].action_code);
+    }
+  }, [data?.nextActions?.[0]?.action_code]);
 
   async function initializeWorkspace() {
     if (!assessmentId) return;
@@ -116,7 +116,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   }
 
   async function updateTask(taskInstanceId: string, status: string) {
-    if (!assessmentId) return;
+    if (!assessmentId || !taskInstanceId) return;
     setSaving(true);
     setError(null);
     try {
@@ -130,29 +130,6 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       setData(payload.data || payload);
     } catch (err: any) {
       setError(err?.message || 'Failed to update task.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveEvidence(taskInstanceId: string) {
-    if (!assessmentId) return;
-    const noteText = String(evidenceDrafts[taskInstanceId] || '').trim();
-    if (!noteText) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/business-readiness/evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId, taskInstanceId, noteText, evidenceType: 'note', replaceExisting: true }),
-      });
-      const payload = await res.json();
-      if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to save evidence.');
-      setData(payload.data || payload);
-      setEvidenceDrafts((current) => ({ ...current, [taskInstanceId]: '' }));
-    } catch (err: any) {
-      setError(err?.message || 'Failed to save evidence.');
     } finally {
       setSaving(false);
     }
@@ -178,340 +155,229 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     }
   }
 
+  const workspace = data?.workspace || null;
+  const phaseStates = data?.phaseStates || [];
   const blockers = data?.blockers || [];
-  const domains = data?.domainStates || [];
-  const phases = data?.phaseStates || [];
-  const tasks = data?.tasks || [];
   const nextActions = data?.nextActions || [];
-  const evidence = data?.evidence || [];
+  const implementationPlan = data?.implementationPlan || [];
 
-  const groupedDomains = useMemo(() => {
-    const byPhase: Record<string, any[]> = {};
-    for (const row of domains) {
-      const key = row.phase_code || 'phase_0_define';
-      if (!byPhase[key]) byPhase[key] = [];
-      byPhase[key].push(row);
-    }
-    return byPhase;
-  }, [domains]);
+  const currentFocus = nextActions[0] || null;
+  const currentPhaseName = phaseLabel(workspace?.current_phase_code, phaseStates);
 
-  const evidenceByTask = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    for (const row of evidence) {
-      if (!map[row.task_instance_id]) map[row.task_instance_id] = [];
-      map[row.task_instance_id].push(row);
-    }
-    return map;
-  }, [evidence]);
+  const currentPhasePlan = useMemo(() => {
+    return implementationPlan.find((phase: any) => phase.phase_code === workspace?.current_phase_code) || implementationPlan[0] || null;
+  }, [implementationPlan, workspace?.current_phase_code]);
 
-  const blockerTaskCodes = useMemo(() => new Set(blockers.map((row: any) => row.task_code).filter(Boolean)), [blockers]);
-  const activePhaseCode = data?.workspace?.current_phase_code || phases.find((row: any) => row.status !== 'complete' && row.status !== 'locked')?.phase_code || 'phase_0_define';
+  if (loading) return <div style={{ padding: 16 }}>Loading Business Readiness…</div>;
 
-  const groupedTasksByPhase = useMemo(() => {
-    const byPhase: Record<string, Record<string, any[]>> = {};
-    for (const task of tasks) {
-      const phaseCode = task.phase_code || 'phase_0_define';
-      const domainCode = task.domain_code || 'd01_business_definition';
-      if (!byPhase[phaseCode]) byPhase[phaseCode] = {};
-      if (!byPhase[phaseCode][domainCode]) byPhase[phaseCode][domainCode] = [];
-      byPhase[phaseCode][domainCode].push(task);
-    }
-    return byPhase;
-  }, [tasks]);
+  if (!assessmentId) {
+    return <Card>No assessment selected yet.</Card>;
+  }
 
-  const filteredTasksByPhase = useMemo(() => {
-    const byPhase: Record<string, Record<string, any[]>> = {};
-    const include = (task: any) => {
-      if (taskFilter === 'all') return true;
-      if (taskFilter === 'done') return task.status === 'done';
-      if (taskFilter === 'proof') return Boolean(task.evidence_required_flag);
-      if (taskFilter === 'blockers') return Boolean(task.can_block_launch) || blockerTaskCodes.has(task.task_code);
-      if (taskFilter === 'do_now') return task.status !== 'done' && (blockerTaskCodes.has(task.task_code) || task.can_block_launch || task.phase_code === activePhaseCode);
-      return true;
-    };
-    for (const [phaseCode, domainsMap] of Object.entries(groupedTasksByPhase)) {
-      for (const [domainCode, rows] of Object.entries(domainsMap)) {
-        const filtered = (rows as any[]).filter(include);
-        if (!filtered.length) continue;
-        if (!byPhase[phaseCode]) byPhase[phaseCode] = {};
-        byPhase[phaseCode][domainCode] = filtered.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
-      }
-    }
-    return byPhase;
-  }, [groupedTasksByPhase, taskFilter, blockerTaskCodes, activePhaseCode]);
-
-  const evidenceTasks = useMemo(() => tasks.filter((task: any) => task.evidence_required_flag), [tasks]);
-
-  if (loading) return <div className="card"><div className="card-title">Loading Business Readiness…</div></div>;
-  if (error) return <div className="card"><div className="card-title">Business Readiness</div><p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p></div>;
-
-  if (!data?.workspace) {
+  if (!data?.hasWorkspace) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h3 className="card-title">Set up Business Readiness</h3>
-            <p className="card-subtitle">Choose the type of business and operating region so Kinto can create the guided readiness workspace.</p>
+      <div style={{ display: 'grid', gap: 16 }}>
+        <Card>
+          <SectionTitle>Start Business Readiness</SectionTitle>
+          <SmallMuted>Tell Kinto what you are starting and it will build the first implementation plan.</SmallMuted>
+          <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+            <label>
+              <SmallMuted>Business type</SmallMuted>
+              <select value={form.businessTypeCode} onChange={(e) => setForm((current) => ({ ...current, businessTypeCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                {(data?.businessTypes || []).map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <SmallMuted>Region</SmallMuted>
+              <select value={form.primaryRegionCode} onChange={(e) => setForm((current) => ({ ...current, primaryRegionCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                {(data?.regions || []).map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <SmallMuted>Business name</SmallMuted>
+              <input value={form.businessName} onChange={(e) => setForm((current) => ({ ...current, businessName: e.target.value }))} placeholder="Example: Kinto Test Advisory" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+            </label>
+            <label>
+              <SmallMuted>Founder name</SmallMuted>
+              <input value={form.founderName} onChange={(e) => setForm((current) => ({ ...current, founderName: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+            </label>
+            <label>
+              <SmallMuted>What will you sell?</SmallMuted>
+              <input value={form.whatYouSell} onChange={(e) => setForm((current) => ({ ...current, whatYouSell: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+            </label>
+            <label>
+              <SmallMuted>Target customer</SmallMuted>
+              <input value={form.targetCustomer} onChange={(e) => setForm((current) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+            </label>
+            <button onClick={initializeWorkspace} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>
+              {saving ? 'Creating workspace…' : 'Create workspace'}
+            </button>
           </div>
-        </div>
-        <div className="grid-2">
-          <label className="field">
-            <span className="field-label">Business type</span>
-            <select className="input" value={form.businessTypeCode} onChange={(e) => setForm((v) => ({ ...v, businessTypeCode: e.target.value }))}>
-              {(data?.catalog?.businessTypes || []).map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Region</span>
-            <select className="input" value={form.primaryRegionCode} onChange={(e) => setForm((v) => ({ ...v, primaryRegionCode: e.target.value }))}>
-              {(data?.catalog?.regions || []).map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Business name</span>
-            <input className="input" value={form.businessName} onChange={(e) => setForm((v) => ({ ...v, businessName: e.target.value }))} placeholder="Your business or working name" />
-          </label>
-          <label className="field">
-            <span className="field-label">Founder name</span>
-            <input className="input" value={form.founderName} onChange={(e) => setForm((v) => ({ ...v, founderName: e.target.value }))} placeholder="Founder / owner" />
-          </label>
-          <label className="field">
-            <span className="field-label">What will you sell?</span>
-            <input className="input" value={form.whatYouSell} onChange={(e) => setForm((v) => ({ ...v, whatYouSell: e.target.value }))} placeholder="Products or services" />
-          </label>
-          <label className="field">
-            <span className="field-label">Target customer</span>
-            <input className="input" value={form.targetCustomer} onChange={(e) => setForm((v) => ({ ...v, targetCustomer: e.target.value }))} placeholder="Who this is for" />
-          </label>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={initializeWorkspace} disabled={saving}>
-            {saving ? 'Creating…' : 'Create workspace'}
-          </button>
-        </div>
+        </Card>
+        {error ? <Card><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'grid', gap: '1rem' }}>
-      <div className="grid-4">
-        <div className="stat-card stat-card-accent"><div className="stat-card-label">Current phase</div><div className="stat-card-value">{phaseBadgeLabel(data.workspace.current_phase_code, phases)}</div><div className="stat-card-sub">Guided readiness flow</div></div>
-        <div className="stat-card stat-card-accent"><div className="stat-card-label">Readiness</div><div className="stat-card-value">{readinessLabel(data.workspace.overall_readiness_state || 'started')}</div><div className="stat-card-sub">Module state</div></div>
-        <div className="stat-card stat-card-accent"><div className="stat-card-label">Launch blockers</div><div className="stat-card-value">{blockers.length}</div><div className="stat-card-sub">Critical setup gaps</div></div>
-        <div className="stat-card stat-card-accent"><div className="stat-card-label">Launch status</div><div className="stat-card-value"><span className={`badge ${statusBadgeClass(Boolean(data.workspace.launch_ready_flag))}`}>{data.workspace.launch_ready_flag ? 'Ready' : 'Blocked'}</span></div><div className="stat-card-sub">Minimum launch threshold</div></div>
-      </div>
+    <div style={{ display: 'grid', gap: 16 }}>
+      {error ? <Card><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
 
-      <div className="card">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-          <div>
-            <h3 className="card-title">Sponsor summary</h3>
-            <p className="card-subtitle">Plain-English view of where the business stands right now.</p>
+      {view === 'overview' ? (
+        <div style={{ display: 'grid', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+            <Card>
+              <SmallMuted>Current phase</SmallMuted>
+              <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{currentPhaseName}</div>
+            </Card>
+            <Card>
+              <SmallMuted>Readiness</SmallMuted>
+              <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{sentenceCase(workspace?.overall_readiness_state)}</div>
+            </Card>
+            <Card>
+              <SmallMuted>Launch status</SmallMuted>
+              <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{workspace?.launch_ready_flag ? 'Ready' : 'Not ready yet'}</div>
+            </Card>
+            <Card>
+              <SmallMuted>Critical actions open</SmallMuted>
+              <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{blockers.length}</div>
+            </Card>
           </div>
-          <button className="btn btn-secondary" onClick={runLaunchCheck} disabled={saving}>{saving ? 'Working…' : 'Run launch check'}</button>
-        </div>
-        <p style={{ margin: 0, color: 'var(--text)' }}>{data.sponsorSummary}</p>
-      </div>
 
-      {(view === 'overview' || view === 'phases') && (
-        <div className="card">
-          <div className="card-header"><div><h3 className="card-title">Phase progress</h3><p className="card-subtitle">Business Readiness keeps its own six-phase guided journey inside the module.</p></div></div>
-          <div className="table-scroll">
-            <table className="kinto-table">
-              <thead><tr><th>Phase</th><th>Status</th><th>Progress</th></tr></thead>
-              <tbody>
-                {phases.map((row: any) => (
-                  <tr key={row.phase_code}>
-                    <td style={{ fontWeight: 600 }}>{row.phase_name}</td>
-                    <td>{titleCase(row.status || 'not_started')}</td>
-                    <td>{Math.round(Number(row.percent_complete || 0))}%</td>
-                  </tr>
+          <Card>
+            <SectionTitle>Sponsor summary</SectionTitle>
+            <div style={{ marginTop: 10, lineHeight: 1.55 }}>{data?.summary}</div>
+          </Card>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.1fr) minmax(320px, 1.4fr)', gap: 16 }}>
+            <Card>
+              <SectionTitle>What Kinto wants you to focus on first</SectionTitle>
+              <div style={{ display: 'grid', gap: 12, marginTop: 12 }}>
+                {nextActions.slice(0, 3).map((item: any, index: number) => (
+                  <div key={item.id} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                    <div style={{ fontWeight: 600 }}>{index + 1}. {item.title}</div>
+                    <SmallMuted>{item.reason}</SmallMuted>
+                    {item.next_task_name ? <div style={{ marginTop: 8, fontSize: 13 }}>Start with: <strong>{item.next_task_name}</strong></div> : null}
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {(view === 'overview' || view === 'domains') && (
-        <div className="card">
-          <div className="card-header"><div><h3 className="card-title">Domain readiness</h3><p className="card-subtitle">Launch-critical foundations are tracked separately from later control and optimisation work.</p></div></div>
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {Object.entries(groupedDomains).map(([phaseCode, rows]: any) => (
-              <div key={phaseCode}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: '0.5rem' }}>{phaseBadgeLabel(phaseCode, phases)}</div>
-                <div style={{ display: 'grid', gap: '0.5rem' }}>
-                  {rows.map((row: any) => (
-                    <div key={row.domain_code} style={{ padding: '0.75rem', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', background: 'var(--surface)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{row.domain_name}</div>
-                          <div className="text-xs muted-2">State: {readinessLabel(row.readiness_state)}</div>
-                          {!!row.next_required_task_code && <div className="text-xs muted-2">Next task: {row.next_required_task_code}</div>}
-                        </div>
-                        {row.launch_critical ? <span className="badge badge-warn">Launch-critical</span> : <span className="badge badge-muted">Supporting</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
-            ))}
+            </Card>
+            <Card>
+              <SectionTitle>What is holding you back right now</SectionTitle>
+              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                {blockers.length ? blockers.slice(0, 4).map((row: any) => (
+                  <div key={row.blocker_id} style={{ padding: 12, border: '1px solid #fee2e2', borderRadius: 10, background: '#fff7f7' }}>
+                    <div style={{ fontWeight: 600 }}>{row.title}</div>
+                    <SmallMuted>{row.description}</SmallMuted>
+                  </div>
+                )) : <SmallMuted>No active launch blockers right now.</SmallMuted>}
+              </div>
+            </Card>
           </div>
-        </div>
-      )}
 
-      {(view === 'overview' || view === 'tasks') && (
-        <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <div><h3 className="card-title">Tasks and proof</h3><p className="card-subtitle">Work by phase, focus on the current step first, and keep proof with the task that needs it.</p></div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {TASK_FILTERS.map((filter) => (
-                <button key={filter.key} className={`btn ${taskFilter === filter.key ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTaskFilter(filter.key)}>{filter.label}</button>
+          <Card>
+            <SectionTitle>What happens next</SectionTitle>
+            <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+              {(currentPhasePlan?.sections || []).flatMap((section: any) => section.actions).slice(0, 3).map((action: any) => (
+                <div key={action.action_code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600 }}>{action.action_title}</div>
+                    <StatusPill label={action.status} />
+                  </div>
+                  <SmallMuted>{action.objective}</SmallMuted>
+                </div>
               ))}
             </div>
-          </div>
-          <div style={{ display: 'grid', gap: '0.85rem' }}>
-            {Object.entries(filteredTasksByPhase).map(([phaseCode, domainMap]) => {
-              const phase = phases.find((row: any) => row.phase_code === phaseCode);
-              const isActive = phaseCode === activePhaseCode;
-              return (
-                <details key={phaseCode} open={isActive} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--surface)' }}>
-                  <summary style={{ listStyle: 'none', cursor: 'pointer', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{phaseBadgeLabel(phaseCode, phases)}</div>
-                      <div className="text-xs muted-2">{titleCase(phase?.status || 'not_started')} • {Math.round(Number(phase?.percent_complete || 0))}% complete</div>
-                    </div>
-                    <span className={`badge ${isActive ? 'badge-info' : 'badge-muted'}`}>{isActive ? 'Current focus' : 'Other phase'}</span>
-                  </summary>
-                  <div style={{ padding: '0 1rem 1rem', display: 'grid', gap: '0.85rem' }}>
-                    {Object.entries(domainMap as Record<string, any[]>).map(([domainCode, taskRows]) => {
-                      const domain = domains.find((row: any) => row.domain_code === domainCode);
-                      return (
-                        <div key={domainCode} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0.85rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
-                            <div>
-                              <div style={{ fontWeight: 700 }}>{domain?.domain_name || domainCode}</div>
-                              <div className="text-xs muted-2">{readinessLabel(domain?.readiness_state)} • {Math.round(Number(domain?.percent_complete || 0))}% complete</div>
-                            </div>
-                            {domain?.launch_critical ? <span className="badge badge-warn">Launch-critical</span> : <span className="badge badge-muted">Supporting</span>}
-                          </div>
-                          <div style={{ display: 'grid', gap: '0.75rem' }}>
-                            {(taskRows as any[]).map((task: any) => {
-                              const taskEvidence = evidenceByTask[task.task_instance_id] || [];
-                              return (
-                                <div key={task.task_instance_id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0.75rem' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                                    <div>
-                                      <div style={{ fontWeight: 600 }}>{task.task_name}</div>
-                                      <div className="text-xs muted-2">{task.task_description}</div>
-                                      <div className="text-xs muted-2">Role: {titleCase(task.task_role)} • Status: {taskStatusLabel(task.status)}</div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                                      {blockerTaskCodes.has(task.task_code) ? <span className="badge badge-warn">Fix now</span> : null}
-                                      {task.can_block_launch ? <span className="badge badge-warn">Blocks launch</span> : <span className="badge badge-muted">Internal</span>}
-                                      {task.evidence_required_flag ? <span className="badge badge-info">Proof needed</span> : null}
-                                    </div>
-                                  </div>
-                                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                                    <button className="btn btn-secondary" onClick={() => updateTask(task.task_instance_id, 'in_progress')} disabled={saving || task.status === 'in_progress'}>Start</button>
-                                    <button className="btn btn-primary" onClick={() => updateTask(task.task_instance_id, 'done')} disabled={saving || task.status === 'done'}>Mark done</button>
-                                    {task.status === 'done' ? <button className="btn btn-secondary" onClick={() => updateTask(task.task_instance_id, 'not_started')} disabled={saving}>Reopen</button> : null}
-                                  </div>
-                                  <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.5rem' }}>
-                                    <div className="text-xs muted-2">Proof / evidence</div>
-                                    <textarea className="input" rows={3} value={evidenceDrafts[task.task_instance_id] ?? ''} onChange={(e) => setEvidenceDrafts((current) => ({ ...current, [task.task_instance_id]: e.target.value }))} placeholder={task.evidence_required_flag ? 'Add a note describing the proof or link you have for this step.' : 'Add a simple note if you want to capture proof or context.'} />
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                      <div className="text-xs muted-2">{taskEvidence.length ? `${taskEvidence.length} proof item(s) saved` : 'No proof saved yet'}</div>
-                                      <button className="btn btn-secondary" onClick={() => saveEvidence(task.task_instance_id)} disabled={saving || !String(evidenceDrafts[task.task_instance_id] || '').trim()}>Save proof note</button>
-                                    </div>
-                                    {taskEvidence.length ? (
-                                      <div style={{ display: 'grid', gap: '0.4rem' }}>
-                                        {taskEvidence.slice(0, 2).map((item: any) => (
-                                          <div key={item.evidence_id} className="text-xs muted-2" style={{ padding: '0.5rem', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' }}>{item.note_text || item.external_link || item.file_url || 'Proof item saved'}</div>
-                                        ))}
-                                      </div>
-                                    ) : null}
+            <div style={{ marginTop: 12 }}>
+              <button onClick={runLaunchCheck} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #111827', background: '#fff', color: '#111827', fontWeight: 600 }}>
+                {saving ? 'Refreshing…' : 'Refresh launch check'}
+              </button>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 16 }}>
+          {(implementationPlan || []).map((phase: any) => (
+            <Card key={phase.phase_code}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div>
+                  <SectionTitle>{phase.phase_name}</SectionTitle>
+                  <SmallMuted>{phase.phase_code === workspace?.current_phase_code ? 'Current phase' : 'Later phase'}</SmallMuted>
+                </div>
+                {phase.phase_code === workspace?.current_phase_code ? <StatusPill label="current" /> : null}
+              </div>
+              <div style={{ display: 'grid', gap: 16, marginTop: 16 }}>
+                {phase.sections.map((section: any) => (
+                  <div key={section.section_code}>
+                    <div style={{ fontWeight: 700, marginBottom: 10 }}>{section.section_name}</div>
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {section.actions.map((action: any) => {
+                        const isOpen = openAction === action.action_code;
+                        return (
+                          <div key={action.action_code} style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+                            <button onClick={() => setOpenAction(isOpen ? null : action.action_code)} style={{ width: '100%', textAlign: 'left', padding: 14, border: 'none', background: '#f9fafb', cursor: 'pointer' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                                <div>
+                                  <div style={{ fontWeight: 700 }}>{action.action_title}</div>
+                                  <SmallMuted>{action.objective}</SmallMuted>
+                                  <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                                    <StatusPill label={action.status} />
+                                    {action.launch_critical ? <span style={{ fontSize: 12, fontWeight: 600, color: '#991b1b' }}>Launch critical</span> : null}
+                                    <span style={{ fontSize: 12, color: '#6b7280' }}>{action.completed_tasks} / {action.total_tasks} tasks complete</span>
                                   </div>
                                 </div>
-                              );
-                            })}
+                                <div style={{ fontSize: 12, color: '#6b7280' }}>{isOpen ? 'Hide' : 'Open'}</div>
+                              </div>
+                            </button>
+                            {isOpen ? (
+                              <div style={{ padding: 14, display: 'grid', gap: 12 }}>
+                                {action.tasks.map((task: any) => (
+                                  <div key={task.task_code} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 14 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                                      <div style={{ fontWeight: 600 }}>{task.task_title}</div>
+                                      <StatusPill label={task.status} />
+                                    </div>
+                                    <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Instructions</div>
+                                        <div style={{ lineHeight: 1.55 }}>{task.instructions}</div>
+                                      </div>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Requirements</div>
+                                        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+                                          {(task.requirements || []).map((item: string) => <li key={item}>{item}</li>)}
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Where to do this</div>
+                                        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+                                          {(task.where_to_do_this || []).map((item: string) => <li key={item}>{item}</li>)}
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Record and save</div>
+                                        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+                                          {(task.record_and_save || []).map((item: string) => <li key={item}>{item}</li>)}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                                      <button onClick={() => updateTask(task.task_instance_id, 'in_progress')} disabled={saving || !task.task_instance_id} style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff' }}>Mark started</button>
+                                      <button onClick={() => updateTask(task.task_instance_id, 'done')} disabled={saving || !task.task_instance_id} style={{ padding: '8px 10px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff' }}>Mark complete</button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </details>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {view === 'evidence' && (
-        <div className="card">
-          <div className="card-header"><div><h3 className="card-title">Evidence queue</h3><p className="card-subtitle">Proof-sensitive steps collected in one place so you can see what still needs supporting evidence.</p></div></div>
-          <div style={{ display: 'grid', gap: '0.75rem' }}>
-            {evidenceTasks.map((task: any) => {
-              const taskEvidence = evidenceByTask[task.task_instance_id] || [];
-              return (
-                <div key={task.task_instance_id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0.85rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{task.task_name}</div>
-                      <div className="text-xs muted-2">{task.domain_name} • {task.status === 'done' ? 'Step completed' : 'Step still in progress'}</div>
-                    </div>
-                    <span className={`badge ${taskEvidence.length ? 'badge-good' : 'badge-warn'}`}>{taskEvidence.length ? 'Proof saved' : 'Proof missing'}</span>
-                  </div>
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <textarea className="input" rows={3} value={evidenceDrafts[task.task_instance_id] ?? ''} onChange={(e) => setEvidenceDrafts((current) => ({ ...current, [task.task_instance_id]: e.target.value }))} placeholder="Add a proof note, link, or simple explanation for this step." />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div className="text-xs muted-2">{taskEvidence.length ? `${taskEvidence.length} proof item(s) saved` : 'No proof saved yet'}</div>
-                      <button className="btn btn-secondary" onClick={() => saveEvidence(task.task_instance_id)} disabled={saving || !String(evidenceDrafts[task.task_instance_id] || '').trim()}>Save proof note</button>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {(view === 'overview' || view === 'blockers') && (
-        <div className="grid-2" style={{ alignItems: 'start' }}>
-          <div className="card">
-            <div className="card-header"><div><h3 className="card-title">Immediate next actions</h3><p className="card-subtitle">Work these first so the guided setup keeps moving.</p></div></div>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {nextActions.map((row: any) => (
-                <div key={row.id} style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', padding: '0.75rem' }}>
-                  <div style={{ fontWeight: 600 }}>{row.title}</div>
-                  <div className="text-xs muted-2" style={{ marginTop: '0.15rem' }}>{row.reason}</div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span className="text-xs muted-2">{phaseBadgeLabel(row.phase_code, phases)}</span>
-                    <button className="btn btn-secondary" onClick={() => viewLink('tasks')}>Go to tasks</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-header"><div><h3 className="card-title">Active launch blockers</h3><p className="card-subtitle">Critical setup gaps are listed first, then proof gaps that are stopping launch from turning green.</p></div></div>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
-              {blockers.length === 0 ? <div className="text-sm muted-2">No active launch blockers.</div> : blockers.map((row: any) => (
-                <div key={row.blocker_id} style={{ padding: '0.75rem', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)', background: 'var(--surface)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{row.title}</div>
-                      <div className="text-xs muted-2">{row.description}</div>
-                    </div>
-                    <span className="badge badge-warn">{row.severity}</span>
-                  </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn btn-secondary" onClick={() => viewLink(row.blocker_type === 'missing_evidence' ? 'evidence' : 'tasks')}>Fix this</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
     </div>

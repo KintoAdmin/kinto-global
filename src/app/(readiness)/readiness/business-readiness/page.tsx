@@ -17,10 +17,7 @@ export default async function BusinessReadinessPage({ searchParams }: PageProps)
   const aId = snapshot.assessment?.assessment_id;
   const tabs = [
     { key: 'overview', label: 'Overview' },
-    { key: 'phases', label: 'Phases' },
-    { key: 'tasks', label: 'Tasks' },
-    { key: 'evidence', label: 'Evidence' },
-    { key: 'blockers', label: 'Blockers' },
+    { key: 'roadmap', label: 'Roadmap / Project Implementation' },
   ];
 
   return (
@@ -28,7 +25,7 @@ export default async function BusinessReadinessPage({ searchParams }: PageProps)
       <div className="page-header">
         <div>
           <h1 className="page-title">Business Readiness</h1>
-          <p className="page-subtitle">Guided business setup inside Kinto — step by step, beginner-friendly, and built to feed the wider transformation roadmap without losing its own structure.</p>
+          <p className="page-subtitle">Structured founder guidance inside Kinto: phases, sections, actions, and tasks with direct implementation instructions.</p>
         </div>
       </div>
       <div className="view-tabs">

@@ -1,4 +1,6 @@
 // @ts-nocheck
+export const BR_TEMPLATE_VERSION = 'br-v4-structure-reset';
+
 export const BR_BUSINESS_TYPES = [
   { code: 'retail_shop', label: 'Retail / Shop' },
   { code: 'professional_services', label: 'Professional Services / Consulting' },
@@ -22,89 +24,443 @@ export const BR_PHASES = [
   { code: 'phase_5_launch', name: 'Launch readiness', order: 5 },
 ];
 
-export const BR_DOMAINS = [
-  { code: 'd01_business_definition', phase_code: 'phase_0_define', name: 'Business Definition', launch_critical: true },
-  { code: 'd02_offer_pricing', phase_code: 'phase_0_define', name: 'Offer, Pricing, and Commercial Basics', launch_critical: true },
-  { code: 'd03_ownership_structure', phase_code: 'phase_1_formal', name: 'Ownership and Structure', launch_critical: true },
-  { code: 'd04_registration_formal', phase_code: 'phase_1_formal', name: 'Registration and Formal Establishment', launch_critical: true },
-  { code: 'd05_banking_payments', phase_code: 'phase_2_financial', name: 'Banking, Payments, and Money Separation', launch_critical: true },
-  { code: 'd06_bookkeeping', phase_code: 'phase_2_financial', name: 'Bookkeeping and Financial Discipline', launch_critical: true },
-  { code: 'd07_suppliers_inputs', phase_code: 'phase_3_operating', name: 'Suppliers, Inputs, and Fulfilment Readiness', launch_critical: false },
-  { code: 'd08_customer_sales', phase_code: 'phase_3_operating', name: 'Customer and Sales Process', launch_critical: true },
-  { code: 'd09_core_operations', phase_code: 'phase_3_operating', name: 'Core Operations and Service Delivery', launch_critical: true },
-  { code: 'd10_quality_consistency', phase_code: 'phase_4_control', name: 'Quality and Consistency', launch_critical: false },
-  { code: 'd11_people_roles', phase_code: 'phase_4_control', name: 'People, Roles, and Accountability', launch_critical: false },
-  { code: 'd12_management_control', phase_code: 'phase_4_control', name: 'Management Control and Visibility', launch_critical: false },
-  { code: 'd13_risk_compliance', phase_code: 'phase_4_control', name: 'Risk, Compliance, and Basic Protection', launch_critical: true },
-  { code: 'd14_launch_readiness', phase_code: 'phase_5_launch', name: 'Launch Readiness', launch_critical: false },
+const COMMON_STRUCTURE = [
+  {
+    phase_code: 'phase_0_define',
+    phase_name: 'Define the business',
+    sections: [
+      {
+        section_code: 'd01_business_definition',
+        section_name: 'Business Definition',
+        actions: [
+          {
+            action_code: 'a01_define_offer',
+            action_title: 'Define the business offer',
+            objective: 'Make the business clear enough to price, register, market, and deliver properly.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_write_offer',
+                task_title: 'Write the core business offer',
+                instructions: 'Write one clear sentence that explains what the business sells. Keep it specific enough that another person can understand it immediately.',
+                requirements: ['business idea', 'product or service description', 'target customer'],
+                where_to_do_this: ['notes document', 'Business Readiness workspace', 'business plan document if available'],
+                record_and_save: ['final offer statement', 'simple business description', 'save in the Business Setup folder'],
+              },
+              {
+                task_code: 't02_define_target_customer',
+                task_title: 'Define the target customer',
+                instructions: 'State exactly who the business is trying to sell to first. Be specific enough to guide pricing, marketing, and service delivery.',
+                requirements: ['chosen offer', 'customer type', 'industry or buyer type if relevant'],
+                where_to_do_this: ['notes document', 'customer profile worksheet'],
+                record_and_save: ['target customer definition', 'primary customer type', 'save in the Business Setup folder'],
+              },
+              {
+                task_code: 't03_set_revenue_model',
+                task_title: 'Define how the business will make money',
+                instructions: 'Set the revenue model the business will use at launch. This should explain how the business gets paid.',
+                requirements: ['offer', 'target customer', 'expected sales method'],
+                where_to_do_this: ['notes document', 'pricing worksheet'],
+                record_and_save: ['revenue model', 'launch sales model', 'save in the Business Setup folder'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        section_code: 'd02_offer_pricing',
+        section_name: 'Offer, Pricing, and Commercial Basics',
+        actions: [
+          {
+            action_code: 'a02_set_launch_pricing',
+            action_title: 'Set the launch offer and pricing',
+            objective: 'Make the launch offer, price, and payment terms clear before the business starts selling.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_finalize_launch_offer',
+                task_title: 'Finalise the launch offer',
+                instructions: 'Decide exactly what the business will sell at launch. Keep the offer narrow enough to explain clearly and deliver properly.',
+                requirements: ['core business offer', 'target customer', 'revenue model'],
+                where_to_do_this: ['notes document', 'service or product sheet', 'offer worksheet'],
+                record_and_save: ['launch offer', 'offer description', 'exclusions if relevant', 'save in the Sales Setup folder'],
+              },
+              {
+                task_code: 't02_set_launch_pricing',
+                task_title: 'Set the launch pricing',
+                instructions: 'Set the pricing the business will use when it starts selling. The price should match the offer and be easy to explain to customers.',
+                requirements: ['launch offer', 'price basis', 'expected payment timing'],
+                where_to_do_this: ['pricing worksheet', 'quote template or rate card'],
+                record_and_save: ['final launch pricing', 'pricing notes', 'quote or rate card', 'save in the Sales Setup folder'],
+              },
+              {
+                task_code: 't03_set_payment_terms',
+                task_title: 'Set the payment terms',
+                instructions: 'Decide when payment is due, how it should be made, and what rule will apply if the customer pays late.',
+                requirements: ['launch pricing', 'payment method', 'business sales model'],
+                where_to_do_this: ['invoice template', 'quote template', 'terms note or proposal template'],
+                record_and_save: ['payment terms', 'late payment rule', 'customer payment instructions', 'save in the Sales Setup folder'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    phase_code: 'phase_1_formal',
+    phase_name: 'Formal setup',
+    sections: [
+      {
+        section_code: 'd03_ownership_structure',
+        section_name: 'Ownership and Structure',
+        actions: [
+          {
+            action_code: 'a03_choose_setup_path',
+            action_title: 'Choose the business setup path',
+            objective: 'Set the structure and ownership position clearly before registration begins.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_confirm_legal_structure',
+                task_title: 'Confirm the legal structure',
+                instructions: 'Decide the legal structure you will use before registration begins. This determines the registration route, tax path, banking setup, and later admin requirements.',
+                requirements: ['owner or founder details', 'ownership position', 'country or region selected'],
+                where_to_do_this: ['business setup notes', 'registration authority guidance', 'accountant or business advisor if needed'],
+                record_and_save: ['chosen legal structure', 'notes on why it was chosen', 'save in the Business Setup folder'],
+              },
+              {
+                task_code: 't02_confirm_ownership_authority',
+                task_title: 'Confirm ownership and decision authority',
+                instructions: 'Record who owns the business and who can make important decisions before moving into formal setup.',
+                requirements: ['founder or owner names', 'ownership split if more than one person is involved', 'decision-maker list'],
+                where_to_do_this: ['notes document', 'founder agreement or ownership note if relevant'],
+                record_and_save: ['owner list', 'ownership split', 'decision authority note', 'save in the Business Setup folder'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        section_code: 'd04_registration_formal',
+        section_name: 'Registration and Formal Establishment',
+        actions: [
+          {
+            action_code: 'a04_complete_registration',
+            action_title: 'Complete registration',
+            objective: 'Put the business on the correct formal path so banking, invoicing, and launch activity can continue properly.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_confirm_registration_route',
+                task_title: 'Confirm the correct registration route',
+                instructions: 'Confirm the legal structure you are using for the business and match it to the correct registration route before completing any forms. Do not start submissions until this is clear.',
+                requirements: ['chosen business structure', 'founder or owner details', 'ID or passport details', 'confirmation of operating region'],
+                where_to_do_this: ['registration authority portal', 'tax authority guidance', 'setup notes or checklist'],
+                record_and_save: ['confirmed registration route', 'supporting notes', 'save in the Business Setup folder'],
+              },
+              {
+                task_code: 't02_complete_registration_process',
+                task_title: 'Complete the registration process',
+                instructions: 'Complete the registration using the correct business and owner details. Before submitting anything, check that the business name, owner details, and contact details are correct and consistent.',
+                requirements: ['business name', 'owner or director details', 'ID or passport', 'contact details', 'business address', 'payment method if fees apply'],
+                where_to_do_this: ['registration portal', 'internet access', 'scanned documents or clear copies if needed'],
+                record_and_save: ['registration confirmation', 'registration number if applicable', 'proof of submission', 'save in the Business Setup folder and cloud backup'],
+              },
+              {
+                task_code: 't03_save_registration_tax_details',
+                task_title: 'Save the registration and tax details',
+                instructions: 'Once registration is complete, save all official details together in one place. These details will be needed later for banking, tax, bookkeeping, contracts, and compliance.',
+                requirements: ['official business name', 'registration number if applicable', 'registration date', 'tax reference number where relevant', 'tax account access details'],
+                where_to_do_this: ['secure cloud storage', 'password manager', 'tax portal account'],
+                record_and_save: ['registration certificate', 'registration number', 'tax number or reference', 'portal login reference', 'save in the Business Setup and Tax folders'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    phase_code: 'phase_2_financial',
+    phase_name: 'Financial setup',
+    sections: [
+      {
+        section_code: 'd05_banking_payments',
+        section_name: 'Banking, Payments, and Money Separation',
+        actions: [
+          {
+            action_code: 'a05_set_up_banking',
+            action_title: 'Set up business banking',
+            objective: 'Create a clean business money setup before the business starts trading.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_open_business_account',
+                task_title: 'Open the business bank account',
+                instructions: 'Open the bank account the business will use for all business income and business expenses. This should be done before the business starts trading. Use the official business details from registration when applying.',
+                requirements: ['ID or passport', 'cellphone number', 'email address', 'registration number if applicable', 'registration documents if applicable', 'proof of address if required by the bank'],
+                where_to_do_this: ['bank business account application portal or branch', 'scanned or photographed documents', 'phone and email for verification'],
+                record_and_save: ['bank name', 'account type', 'account opening confirmation', 'account details for invoices', 'save in the Banking or Finance Setup folder'],
+              },
+              {
+                task_code: 't02_set_payment_method_launch',
+                task_title: 'Set the payment method for launch',
+                instructions: 'Decide how customers will pay the business when trading begins. Keep this simple. Only add extra payment methods if they are needed for launch.',
+                requirements: ['active business bank account', 'clear customer payment method', 'invoice template', 'payment terms'],
+                where_to_do_this: ['invoicing template or invoicing software', 'business bank account', 'optional payment platform if needed'],
+                record_and_save: ['chosen payment method', 'invoice template', 'payment terms', 'customer payment instructions', 'save in the Sales Admin or Finance folder'],
+              },
+              {
+                task_code: 't03_separate_business_money',
+                task_title: 'Separate business money from personal money',
+                instructions: 'Use the business bank account for all business income and business expenses from the first day of trading. Do not run customer payments or business costs through a personal account once the business is operating.',
+                requirements: ['active business bank account', 'bookkeeping method', 'clear rule for owner contributions and withdrawals'],
+                where_to_do_this: ['business bank account', 'bookkeeping spreadsheet or bookkeeping software'],
+                record_and_save: ['rule for owner money paid into the business', 'rule for owner money taken from the business', 'first business transaction date', 'save in the Finance Policy or Bookkeeping Setup file'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        section_code: 'd06_bookkeeping',
+        section_name: 'Bookkeeping and Financial Discipline',
+        actions: [
+          {
+            action_code: 'a06_put_bookkeeping_in_place',
+            action_title: 'Put bookkeeping in place',
+            objective: 'Make sure the business can record income, expenses, and financial documents properly from the beginning.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_choose_bookkeeping_method',
+                task_title: 'Choose the bookkeeping method',
+                instructions: 'Choose how the business will record sales, expenses, and financial documents from the start. Use a method that is simple enough to keep updated every week.',
+                requirements: ['person responsible for keeping records', 'chosen bookkeeping method', 'routine for updating records', 'storage location for documents'],
+                where_to_do_this: ['spreadsheet, Google Sheets, Excel, or bookkeeping software'],
+                record_and_save: ['chosen bookkeeping method', 'person responsible', 'update routine', 'save in the Finance Setup file'],
+              },
+              {
+                task_code: 't02_set_income_expense_categories',
+                task_title: 'Set the income and expense categories',
+                instructions: 'Create the main categories the business will use to record money coming in and money going out. Keep the list simple and practical so it matches how the business actually operates.',
+                requirements: ['list of income types', 'list of expense types', 'understanding of main business activities'],
+                where_to_do_this: ['spreadsheet or bookkeeping software'],
+                record_and_save: ['final category list', 'notes on how each category should be used', 'save in the Bookkeeping folder'],
+              },
+              {
+                task_code: 't03_set_document_storage_method',
+                task_title: 'Set the document storage method',
+                instructions: 'Choose one safe place to store invoices, receipts, bank statements, registration documents, and tax documents. Use the same folder structure every time so records stay organised and easy to find.',
+                requirements: ['storage location', 'folder structure', 'file naming rule', 'routine for saving documents'],
+                where_to_do_this: ['Google Drive, OneDrive, Dropbox, or secure local folder'],
+                record_and_save: ['folder structure', 'file naming convention', 'storage location used', 'save in the Business Setup Guide or Finance Setup file'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    phase_code: 'phase_3_operating',
+    phase_name: 'Operating setup',
+    sections: [
+      {
+        section_code: 'd08_customer_sales',
+        section_name: 'Customer and Sales Process',
+        actions: [
+          {
+            action_code: 'a07_define_customer_process',
+            action_title: 'Define the customer enquiry-to-payment process',
+            objective: 'Create a repeatable path from first customer interest to payment.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_set_enquiry_channel',
+                task_title: 'Set the enquiry channel',
+                instructions: 'Choose how new customers will contact the business at launch. Use only the channels the business can monitor and respond to properly.',
+                requirements: ['target customer', 'communication channels', 'owner or sales contact'],
+                where_to_do_this: ['business email', 'phone number', 'WhatsApp Business or website form if relevant'],
+                record_and_save: ['enquiry channels', 'response contact details', 'save in the Sales Admin folder'],
+              },
+              {
+                task_code: 't02_set_offer_presentation_method',
+                task_title: 'Set the offer presentation method',
+                instructions: 'Decide how the offer will be presented to customers. This could be through a quote, proposal, service sheet, or product list.',
+                requirements: ['launch offer', 'launch pricing', 'customer contact process'],
+                where_to_do_this: ['quote template', 'proposal template', 'product or service sheet'],
+                record_and_save: ['final presentation format', 'template used', 'save in the Sales Admin folder'],
+              },
+              {
+                task_code: 't03_set_customer_acceptance_step',
+                task_title: 'Set the customer acceptance step',
+                instructions: 'Define what counts as a customer saying yes before work starts or goods are prepared. This should be clear enough that the business knows when the sale is real.',
+                requirements: ['offer presentation method', 'payment terms', 'chosen sales process'],
+                where_to_do_this: ['quote approval', 'proposal acceptance', 'signed confirmation or written instruction'],
+                record_and_save: ['acceptance method', 'acceptance rule', 'template or process used', 'save in the Sales Admin folder'],
+              },
+              {
+                task_code: 't04_set_payment_trigger',
+                task_title: 'Set the payment trigger',
+                instructions: 'Define when the customer must pay in the sales process. Do this before launch so the business does not improvise payment timing case by case.',
+                requirements: ['payment terms', 'customer acceptance step', 'launch pricing'],
+                where_to_do_this: ['invoice template', 'quote template', 'sales process note'],
+                record_and_save: ['payment trigger point', 'related invoice or sales note', 'save in the Sales Admin folder'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        section_code: 'd09_core_operations',
+        section_name: 'Core Operations and Service Delivery',
+        actions: [
+          {
+            action_code: 'a08_build_delivery_workflow',
+            action_title: 'Build the delivery workflow',
+            objective: 'Create the repeatable steps the business will follow from accepted sale to completed delivery.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_list_delivery_steps',
+                task_title: 'List the delivery steps',
+                instructions: 'Write down the steps the business will follow from accepted sale to completed delivery. Keep the sequence practical and specific.',
+                requirements: ['launch offer', 'customer acceptance method', 'business operating model'],
+                where_to_do_this: ['process note', 'workflow checklist', 'operations document'],
+                record_and_save: ['delivery step list', 'workflow draft', 'save in the Operations Setup folder'],
+              },
+              {
+                task_code: 't02_set_completion_point',
+                task_title: 'Set the completion point',
+                instructions: 'Define exactly when the work, job, or service is considered complete. This must be clear before launch.',
+                requirements: ['delivery workflow', 'offer scope', 'customer expectation'],
+                where_to_do_this: ['workflow checklist', 'service completion note', 'closeout checklist if relevant'],
+                record_and_save: ['completion standard', 'signoff rule if applicable', 'save in the Operations Setup folder'],
+              },
+              {
+                task_code: 't03_set_issue_handling_rule',
+                task_title: 'Set the issue handling rule',
+                instructions: 'Decide what the business will do when something goes wrong, a complaint is raised, or delivery needs to be corrected.',
+                requirements: ['delivery workflow', 'completion point', 'customer contact process'],
+                where_to_do_this: ['complaint handling note', 'issue log', 'support email or contact channel'],
+                record_and_save: ['issue handling rule', 'escalation contact if relevant', 'save in the Operations Setup folder'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    phase_code: 'phase_4_control',
+    phase_name: 'Control setup',
+    sections: [
+      {
+        section_code: 'd13_risk_compliance',
+        section_name: 'Risk, Compliance, and Basic Protection',
+        actions: [
+          {
+            action_code: 'a09_launch_compliance_basics',
+            action_title: 'Put the launch compliance basics in place',
+            objective: 'Make sure the business has the minimum tax, privacy, and compliance basics checked before launch.',
+            launch_critical: true,
+            tasks: [
+              {
+                task_code: 't01_confirm_tax_admin_path',
+                task_title: 'Confirm the tax administration path',
+                instructions: 'Make sure the business can access the correct tax administration path before launch. Ensure the right tax reference, access, and account details are in place for the chosen setup.',
+                requirements: ['legal structure', 'registration details if applicable', 'tax access details'],
+                where_to_do_this: ['tax portal', 'accountant or tax practitioner if needed'],
+                record_and_save: ['tax number or reference', 'portal access details', 'tax setup note', 'save in the Tax folder'],
+              },
+              {
+                task_code: 't02_confirm_privacy_basics',
+                task_title: 'Confirm privacy and data handling basics',
+                instructions: 'If the business will collect customer, employee, or supplier personal information, set the basic rule for how that information will be stored and handled.',
+                requirements: ['customer or admin process', 'types of personal information collected', 'storage method used'],
+                where_to_do_this: ['privacy note', 'internal admin process', 'advisor if needed'],
+                record_and_save: ['data handling note', 'storage rule', 'save in the Compliance folder'],
+              },
+              {
+                task_code: 't03_confirm_licence_requirements',
+                task_title: 'Confirm any licence, permit, or regulated activity requirements',
+                instructions: 'Check whether the business activity needs any licence, permit, or extra compliance step before launch. If it does, do not ignore it or assume it can wait.',
+                requirements: ['business activity', 'operating location', 'setup route', 'delivery model'],
+                where_to_do_this: ['relevant regulator or authority', 'municipality if relevant', 'advisor if activity is regulated'],
+                record_and_save: ['compliance check result', 'licence or permit requirement note', 'follow-up actions if applicable', 'save in the Compliance folder'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    phase_code: 'phase_5_launch',
+    phase_name: 'Launch readiness',
+    sections: [
+      {
+        section_code: 'd14_launch_readiness',
+        section_name: 'Launch Readiness',
+        actions: [
+          {
+            action_code: 'a10_confirm_launch_readiness',
+            action_title: 'Confirm the business is ready to launch',
+            objective: 'Check that the setup, records, and first trading flow are ready before launch.',
+            launch_critical: false,
+            tasks: [
+              {
+                task_code: 't01_check_critical_setup_actions',
+                task_title: 'Check that the critical setup actions are complete',
+                instructions: 'Review the critical actions in business definition, registration, banking, bookkeeping, customer process, and delivery workflow. Do not launch if any of these are still incomplete.',
+                requirements: ['completed setup actions', 'saved setup records', 'launch checklist'],
+                where_to_do_this: ['Business Readiness module', 'launch checklist', 'internal review document'],
+                record_and_save: ['launch readiness review', 'incomplete action list if any', 'save in the Launch folder'],
+              },
+              {
+                task_code: 't02_check_saved_business_records',
+                task_title: 'Check that the saved business records are complete',
+                instructions: 'Make sure the business setup records are complete and easy to find before launch. This includes registration, banking, tax, bookkeeping, pricing, and customer process records.',
+                requirements: ['Business Setup folder', 'Finance folder', 'Tax folder', 'Sales and Operations folders'],
+                where_to_do_this: ['cloud storage', 'shared folder structure', 'launch checklist'],
+                record_and_save: ['launch document check result', 'missing records list if any', 'save in the Launch folder'],
+              },
+              {
+                task_code: 't03_confirm_first_trading_setup',
+                task_title: 'Confirm the first trading setup',
+                instructions: 'Confirm that the business can take an enquiry, issue a quote or invoice if needed, receive payment, record the transaction, and deliver the work or service using the setup already created.',
+                requirements: ['customer process', 'payment method', 'bookkeeping method', 'delivery workflow'],
+                where_to_do_this: ['invoice template', 'bookkeeping method', 'customer response method', 'workflow checklist'],
+                record_and_save: ['first trading readiness note', 'issues to fix before launch if any', 'save in the Launch folder'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+export const BR_DOMAINS = COMMON_STRUCTURE.flatMap((phase) =>
+  phase.sections.map((section) => ({
+    code: section.section_code,
+    phase_code: phase.phase_code,
+    name: section.section_name,
+    launch_critical: section.actions.some((action) => action.launch_critical),
+  })),
+);
 
 export const BR_LAUNCH_DOMAIN_CODES = BR_DOMAINS.filter((row) => row.launch_critical).map((row) => row.code);
 
-export const BR_READINESS_PERCENT: Record<string, number> = {
+export const BR_READINESS_PERCENT = {
   not_started: 0,
   started: 25,
   set_up: 50,
   operational: 80,
   controlled: 100,
 };
-
-export const BR_TASK_TEMPLATES = [
-  { code: 'd01_define_offer', domain_code: 'd01_business_definition', phase_code: 'phase_0_define', role: 'setup', title: 'Define the main offer', description: 'Write clearly what the business will sell.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd01_define_customer', domain_code: 'd01_business_definition', phase_code: 'phase_0_define', role: 'setup', title: 'Define the target customer', description: 'State who the business is mainly for.', required: true, launch_critical: true, evidence_required: false, sort_order: 2 },
-  { code: 'd01_revenue_model', domain_code: 'd01_business_definition', phase_code: 'phase_0_define', role: 'setup', title: 'Define the revenue model', description: 'Explain how the business makes money.', required: true, launch_critical: true, evidence_required: false, sort_order: 3 },
-  { code: 'd02_offer_list', domain_code: 'd02_offer_pricing', phase_code: 'phase_0_define', role: 'setup', title: 'List the products or services', description: 'Create a usable list of what the business will sell.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd02_price_logic', domain_code: 'd02_offer_pricing', phase_code: 'phase_0_define', role: 'setup', title: 'Set the price or package logic', description: 'Define the price list, rate card, or package structure.', required: true, launch_critical: true, evidence_required: true, sort_order: 2 },
-  { code: 'd02_payment_expectation', domain_code: 'd02_offer_pricing', phase_code: 'phase_0_define', role: 'operate', title: 'Define how customers will pay', description: 'Set the payment expectation clearly before work starts.', required: true, launch_critical: true, evidence_required: false, sort_order: 3 },
-  { code: 'd03_choose_structure', domain_code: 'd03_ownership_structure', phase_code: 'phase_1_formal', role: 'setup', title: 'Choose the basic business structure', description: 'Set the ownership or structure path for the business.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd03_define_authority', domain_code: 'd03_ownership_structure', phase_code: 'phase_1_formal', role: 'setup', title: 'Define who can approve key decisions', description: 'Set who can approve spend, important actions, or signoff.', required: true, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd04_registration_path', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'setup', title: 'Identify the registration path', description: 'Confirm what registration or formal setup path applies.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd04_complete_registration', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'operate', title: 'Complete the main registration step', description: 'Complete the main formal setup step and keep proof.', required: true, launch_critical: true, evidence_required: true, sort_order: 2 },
-  { code: 'd04_recurring_obligations', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'control', title: 'Record recurring obligations', description: 'List annual returns, renewals, or recurring filing items.', required: false, launch_critical: false, evidence_required: false, sort_order: 3 },
-  { code: 'd05_account_path', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'setup', title: 'Choose the business banking path', description: 'Set how the business will receive and hold money.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd05_payment_methods', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'setup', title: 'Choose payment methods', description: 'Set which payment methods the business will accept.', required: true, launch_critical: true, evidence_required: false, sort_order: 2 },
-  { code: 'd05_use_separate_money', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'operate', title: 'Use separate business money flows', description: 'Start using the chosen business payment path consistently.', required: true, launch_critical: true, evidence_required: false, sort_order: 3 },
-  { code: 'd06_bookkeeping_method', domain_code: 'd06_bookkeeping', phase_code: 'phase_2_financial', role: 'setup', title: 'Choose a bookkeeping method', description: 'Pick the system or method for recording money.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd06_categories', domain_code: 'd06_bookkeeping', phase_code: 'phase_2_financial', role: 'setup', title: 'Create income and expense categories', description: 'Set practical categories for business records.', required: true, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd06_store_documents', domain_code: 'd06_bookkeeping', phase_code: 'phase_2_financial', role: 'operate', title: 'Store receipts and invoices properly', description: 'Keep supporting documents in one place.', required: true, launch_critical: true, evidence_required: true, sort_order: 3 },
-  { code: 'd06_monthly_review', domain_code: 'd06_bookkeeping', phase_code: 'phase_2_financial', role: 'control', title: 'Run a monthly review', description: 'Review sales, expenses, and bank activity at least monthly.', required: false, launch_critical: false, evidence_required: false, sort_order: 4 },
-  { code: 'd07_supplier_list', domain_code: 'd07_suppliers_inputs', phase_code: 'phase_3_operating', role: 'setup', title: 'List your core suppliers or inputs', description: 'Identify what the business needs to deliver consistently.', required: false, launch_critical: false, evidence_required: false, sort_order: 1 },
-  { code: 'd07_reorder_rules', domain_code: 'd07_suppliers_inputs', phase_code: 'phase_3_operating', role: 'operate', title: 'Set reorder or replenishment rules', description: 'Decide how shortages or stockouts will be avoided.', required: false, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd08_lead_flow', domain_code: 'd08_customer_sales', phase_code: 'phase_3_operating', role: 'setup', title: 'Define how enquiries come in', description: 'Set the starting point for a customer or lead.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd08_acceptance_step', domain_code: 'd08_customer_sales', phase_code: 'phase_3_operating', role: 'setup', title: 'Define how a customer says yes', description: 'Set how quotes, proposals, orders, or signoffs are accepted.', required: true, launch_critical: true, evidence_required: false, sort_order: 2 },
-  { code: 'd08_payment_trigger', domain_code: 'd08_customer_sales', phase_code: 'phase_3_operating', role: 'operate', title: 'Define the payment trigger', description: 'Set when payment is requested or collected.', required: true, launch_critical: true, evidence_required: false, sort_order: 3 },
-  { code: 'd09_delivery_workflow', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'setup', title: 'Define the delivery workflow', description: 'List the steps from accepted sale to completed delivery.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd09_completion_standard', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'setup', title: 'Define what completed delivery looks like', description: 'Set the completion point or handover standard.', required: true, launch_critical: true, evidence_required: false, sort_order: 2 },
-  { code: 'd09_use_workflow', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'operate', title: 'Use the workflow consistently', description: 'Start following the same delivery path in practice.', required: true, launch_critical: true, evidence_required: false, sort_order: 3 },
-  { code: 'd10_quality_checks', domain_code: 'd10_quality_consistency', phase_code: 'phase_4_control', role: 'setup', title: 'Define simple quality checks', description: 'Set what good looks like and how you will check it.', required: false, launch_critical: false, evidence_required: false, sort_order: 1 },
-  { code: 'd10_problem_handling', domain_code: 'd10_quality_consistency', phase_code: 'phase_4_control', role: 'operate', title: 'Define complaint, rework, or returns handling', description: 'Set what will happen if something goes wrong.', required: false, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd11_role_owner', domain_code: 'd11_people_roles', phase_code: 'phase_4_control', role: 'setup', title: 'Define who owns key responsibilities', description: 'Make it clear who owns sales, delivery, money, and compliance tasks.', required: false, launch_critical: false, evidence_required: false, sort_order: 1 },
-  { code: 'd11_role_review', domain_code: 'd11_people_roles', phase_code: 'phase_4_control', role: 'control', title: 'Review whether responsibilities are clear', description: 'Check that work is not being dropped through confusion.', required: false, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd12_review_rhythm', domain_code: 'd12_management_control', phase_code: 'phase_4_control', role: 'setup', title: 'Set a weekly and monthly review rhythm', description: 'Decide when the owner will review the business.', required: false, launch_critical: false, evidence_required: false, sort_order: 1 },
-  { code: 'd12_track_key_checks', domain_code: 'd12_management_control', phase_code: 'phase_4_control', role: 'control', title: 'Track the key numbers or checks', description: 'Review a small set of owner control checks consistently.', required: false, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd13_risk_map', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'setup', title: 'Identify the major risk and compliance areas', description: 'Check whether tax, privacy, licences, insurance, or legal escalation may apply.', required: true, launch_critical: true, evidence_required: false, sort_order: 1 },
-  { code: 'd13_keep_proof', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'operate', title: 'Keep key proof and responsibilities visible', description: 'Store important registrations, permits, and ownership notes in one place.', required: true, launch_critical: true, evidence_required: false, sort_order: 2 },
-  { code: 'd13_recurring_compliance', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'control', title: 'Track recurring compliance items', description: 'List follow-up dates and who owns them.', required: false, launch_critical: false, evidence_required: false, sort_order: 3 },
-  { code: 'd14_launch_check', domain_code: 'd14_launch_readiness', phase_code: 'phase_5_launch', role: 'setup', title: 'Run the launch check', description: 'Review whether the minimum launch threshold has been met.', required: true, launch_critical: false, evidence_required: false, sort_order: 1 },
-  { code: 'd14_real_world_check', domain_code: 'd14_launch_readiness', phase_code: 'phase_5_launch', role: 'operate', title: 'Confirm the business can actually operate', description: 'Check that the business can take an enquiry, receive money, and deliver.', required: true, launch_critical: false, evidence_required: false, sort_order: 2 },
-  { code: 'd14_306090_plan', domain_code: 'd14_launch_readiness', phase_code: 'phase_5_launch', role: 'control', title: 'Set the first 30/60/90 day plan', description: 'Define what will be watched closely after launch.', required: false, launch_critical: false, evidence_required: false, sort_order: 3 },
-  { code: 'retail_pos_cashup', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'setup', title: 'Choose POS, card, cash, and daily cash-up methods', description: 'Retail setups need payment handling and end-of-day cash-up logic.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['retail_shop'] },
-  { code: 'retail_opening_closing', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'operate', title: 'Create opening and closing routines', description: 'Retail setups should have a simple opening and closing checklist.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['retail_shop'] },
-  { code: 'ps_quote_acceptance', domain_code: 'd08_customer_sales', phase_code: 'phase_3_operating', role: 'setup', title: 'Create a proposal or quote acceptance process', description: 'Professional services need a clear commercial acceptance path.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['professional_services'] },
-  { code: 'ps_collections', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'operate', title: 'Define invoicing and collections follow-up', description: 'Set who invoices and how unpaid invoices are followed up.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['professional_services'] },
-  { code: 'fs_quote_process', domain_code: 'd08_customer_sales', phase_code: 'phase_3_operating', role: 'setup', title: 'Create a quote and job acceptance process', description: 'Field services need a quote to approval path before work begins.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['field_services'] },
-  { code: 'fs_completion_signoff', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'operate', title: 'Create a completion and signoff method', description: 'Set proof of work or customer signoff before closeout.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['field_services'] },
-  { code: 'saas_billing', domain_code: 'd05_banking_payments', phase_code: 'phase_2_financial', role: 'setup', title: 'Choose billing or subscription collection method', description: 'Software businesses need billing logic before launch.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['software_saas'] },
-  { code: 'saas_support_process', domain_code: 'd09_core_operations', phase_code: 'phase_3_operating', role: 'operate', title: 'Define support and issue handling', description: 'Software businesses should define support and issue handling before launch.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, business_types: ['software_saas'] },
-  { code: 'za_registration_path', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'setup', title: 'Confirm the South Africa registration path', description: 'Identify whether the business is using a sole proprietor path or a company path with CIPC/SARS implications.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, regions: ['south_africa'] },
-  { code: 'za_popia_awareness', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'setup', title: 'Review POPIA and Information Officer awareness', description: 'If the business handles personal information, check POPIA awareness and escalation needs.', required: true, launch_critical: false, evidence_required: false, sort_order: 4, regions: ['south_africa'] },
-  { code: 'uae_setup_mode', domain_code: 'd03_ownership_structure', phase_code: 'phase_1_formal', role: 'setup', title: 'Choose mainland or free zone path', description: 'The UAE setup path changes depending on whether the business will operate on the mainland or in a free zone.', required: true, launch_critical: true, evidence_required: false, sort_order: 3, regions: ['uae'] },
-  { code: 'uae_tax_awareness', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'setup', title: 'Review VAT and corporate tax awareness', description: 'Check whether VAT or corporate tax awareness and escalation are needed.', required: true, launch_critical: false, evidence_required: false, sort_order: 4, regions: ['uae'] },
-  { code: 'usa_structure_before_state', domain_code: 'd03_ownership_structure', phase_code: 'phase_1_formal', role: 'setup', title: 'Choose structure before state registration', description: 'In the USA, the structure choice should be clear before completing state registration.', required: true, launch_critical: true, evidence_required: false, sort_order: 3, regions: ['usa'] },
-  { code: 'usa_state_permit_check', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'setup', title: 'Check state and local permits', description: 'Confirm the licensing and permit path for the selected state or locality.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, regions: ['usa'] },
-  { code: 'eu_country_path', domain_code: 'd04_registration_formal', phase_code: 'phase_1_formal', role: 'setup', title: 'Identify the country-specific registration path', description: 'Europe must be handled country first, then registration and permits.', required: true, launch_critical: true, evidence_required: false, sort_order: 4, regions: ['europe'] },
-  { code: 'eu_vat_gdpr_awareness', domain_code: 'd13_risk_compliance', phase_code: 'phase_4_control', role: 'setup', title: 'Review VAT and GDPR awareness', description: 'Check whether EU VAT, OSS, or GDPR awareness applies before launch.', required: true, launch_critical: false, evidence_required: false, sort_order: 4, regions: ['europe'] },
-];
 
 export function readinessLabel(state?: string | null) {
   const value = String(state || 'not_started').toLowerCase();
@@ -136,12 +492,93 @@ export function getBrDomain(code?: string | null) {
   return BR_DOMAINS.find((row) => row.code === code) || null;
 }
 
-export function buildBrTaskTemplates(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
-  const businessTypeCode = input?.businessTypeCode || '';
+function applyRegionText(task, regionCode) {
+  if (regionCode === 'south_africa') {
+    if (task.task_code === 't01_confirm_registration_route') {
+      return {
+        ...task,
+        instructions: 'First confirm the legal structure you are using for the business. In South Africa, this usually means deciding whether you will operate as a sole proprietor or register a company. Do not complete any forms until this is clear because the registration and tax path are different.',
+        requirements: ['chosen business structure', 'founder or owner details', 'South African ID or passport details', 'confirmation that the business will operate in South Africa'],
+        where_to_do_this: ['CIPC BizPortal or CIPC eServices', 'SARS eFiling', 'notes document or checklist'],
+        record_and_save: ['chosen legal structure', 'confirmed registration route', 'save in the Business Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_complete_registration_process') {
+      return {
+        ...task,
+        instructions: 'If you are registering a company, complete the company registration through CIPC using the correct business and owner details. If you are operating as a sole proprietor, make sure your personal tax setup is in order because the business income will be linked to you personally. Before submitting anything, check that the business name, owner details, and contact details are correct and consistent.',
+        requirements: ['business name', 'owner or director details', 'South African ID or passport', 'contact details', 'business address', 'payment method if fees apply'],
+        where_to_do_this: ['CIPC BizPortal or CIPC eServices', 'internet access', 'scanned documents or clear copies if needed'],
+        record_and_save: ['registration confirmation', 'company registration number if applicable', 'proof of submission', 'save in the Business Setup folder and cloud backup'],
+      };
+    }
+    if (task.task_code === 't03_save_registration_tax_details') {
+      return {
+        ...task,
+        requirements: ['official business name', 'registration number if applicable', 'registration date', 'SARS income tax reference number', 'eFiling access details'],
+        where_to_do_this: ['secure cloud storage', 'password manager', 'SARS eFiling account'],
+        record_and_save: ['registration certificate', 'CIPC number', 'SARS tax number', 'eFiling login reference', 'save in the Business Setup and Tax folders'],
+      };
+    }
+    if (task.task_code === 't01_open_business_account') {
+      return {
+        ...task,
+        requirements: ['South African ID or passport', 'cellphone number', 'email address', 'CIPC registration number if registered company', 'registration documents if applicable', 'proof of address if required by the bank', 'director mandate or resolution if applicable'],
+      };
+    }
+  }
+  return task;
+}
+
+export function getBrImplementationBlueprint(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
   const regionCode = input?.regionCode || '';
-  return BR_TASK_TEMPLATES.filter((row) => {
-    if (Array.isArray(row.business_types) && row.business_types.length && !row.business_types.includes(businessTypeCode)) return false;
-    if (Array.isArray(row.regions) && row.regions.length && !row.regions.includes(regionCode)) return false;
-    return true;
-  }).map((row) => ({ ...row }));
+  return COMMON_STRUCTURE.map((phase) => ({
+    ...phase,
+    sections: phase.sections.map((section) => ({
+      ...section,
+      actions: section.actions.map((action) => ({
+        ...action,
+        tasks: action.tasks.map((task) => applyRegionText(task, regionCode)),
+      })),
+    })),
+  }));
+}
+
+export function getBrActionBlueprints(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
+  return getBrImplementationBlueprint(input).flatMap((phase) =>
+    phase.sections.flatMap((section) =>
+      section.actions.map((action) => ({
+        ...action,
+        phase_code: phase.phase_code,
+        phase_name: phase.phase_name,
+        section_code: section.section_code,
+        section_name: section.section_name,
+      })),
+    ),
+  );
+}
+
+export function buildBrTaskTemplates(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
+  return getBrActionBlueprints(input).flatMap((action) =>
+    action.tasks.map((task, index) => ({
+      code: task.task_code,
+      domain_code: action.section_code,
+      phase_code: action.phase_code,
+      role: 'setup',
+      title: task.task_title,
+      description: task.instructions,
+      required: !task.optional,
+      launch_critical: Boolean(action.launch_critical),
+      evidence_required: false,
+      sort_order: Number(index + 1),
+      action_code: action.action_code,
+      action_title: action.action_title,
+      section_name: action.section_name,
+      instructions: task.instructions,
+      requirements: task.requirements || [],
+      where_to_do_this: task.where_to_do_this || [],
+      record_and_save: task.record_and_save || [],
+      optional: Boolean(task.optional),
+    })),
+  );
 }

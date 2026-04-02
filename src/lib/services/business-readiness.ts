@@ -10,13 +10,13 @@ import {
   BR_PHASES,
   BR_READINESS_PERCENT,
   BR_REGIONS,
+  BR_TEMPLATE_VERSION,
   bandFromReadinessPercent,
   buildBrTaskTemplates,
+  getBrActionBlueprints,
   getBrBusinessTypeLabel,
-  getBrDomain,
-  getBrPhase,
+  getBrImplementationBlueprint,
   getBrRegionLabel,
-  readinessLabel,
 } from '@/lib/business-readiness/catalog';
 import {
   addBrEvidence,
@@ -33,13 +33,6 @@ import {
   updateBrTaskInstance,
   updateBrWorkspace,
 } from '@/lib/repositories/business-readiness';
-
-function phaseName(code: string) {
-  return BR_PHASES.find((row) => row.code === code)?.name || code;
-}
-function domainName(code: string) {
-  return BR_DOMAINS.find((row) => row.code === code)?.name || code;
-}
 
 function scoreFromReadiness(state?: string | null) {
   return BR_READINESS_PERCENT[String(state || 'not_started').toLowerCase()] || 0;
@@ -60,74 +53,105 @@ function buildTaskInstances(workspaceId: string, businessTypeCode: string, regio
     phase_code: task.phase_code,
     task_name: task.title,
     task_description: task.description,
-    task_role: task.role,
+    task_role: task.role || 'setup',
     status: 'not_started',
     required_flag: Boolean(task.required),
     can_block_launch: Boolean(task.launch_critical),
-    evidence_required_flag: Boolean(task.evidence_required),
+    evidence_required_flag: false,
     sort_order: Number(task.sort_order || index + 1),
-    is_region_specific: Array.isArray(task.regions) && task.regions.length > 0,
-    is_business_type_specific: Array.isArray(task.business_types) && task.business_types.length > 0,
-    metadata: { region_codes: task.regions || [], business_type_codes: task.business_types || [] },
+    is_region_specific: false,
+    is_business_type_specific: false,
+    metadata: {
+      action_code: task.action_code,
+      action_title: task.action_title,
+      section_name: task.section_name,
+      instructions: task.instructions,
+      requirements: task.requirements || [],
+      where_to_do_this: task.where_to_do_this || [],
+      record_and_save: task.record_and_save || [],
+      optional: Boolean(task.optional),
+    },
     created_at: nowIso(),
     updated_at: nowIso(),
   }));
 }
 
-function deriveDomainState(tasks: any[], evidence: any[]) {
-  const setupRequired = tasks.filter((row) => row.required_flag && row.task_role === 'setup');
-  const operateRequired = tasks.filter((row) => row.required_flag && row.task_role === 'operate');
-  const controlRequired = tasks.filter((row) => row.required_flag && row.task_role === 'control');
-
-  const started = tasks.some((row) => ['in_progress', 'done'].includes(String(row.status || '')));
-  const proofMissingForTask = (task: any) => {
-    if (!task.evidence_required_flag) return false;
-    const linked = evidence.filter((item) => item.task_instance_id === task.task_instance_id && item.review_status !== 'needs_attention');
-    return linked.length === 0;
-  };
-  const setupTasksDoneIgnoringProof = setupRequired.every((row) => row.status === 'done');
-  const setupDone = setupRequired.every((row) => row.status === 'done' && !proofMissingForTask(row));
-  const operateDone = operateRequired.every((row) => row.status === 'done');
-  const controlDone = controlRequired.every((row) => row.status === 'done');
-
+function deriveSectionState(tasks: any[]) {
+  const required = tasks.filter((row) => row.required_flag !== false);
+  const doneCount = required.filter((row) => row.status === 'done').length;
+  const started = required.some((row) => ['in_progress', 'done'].includes(String(row.status || '')));
+  const percent = required.length ? Math.round((doneCount / required.length) * 100) : 0;
   let readiness = 'not_started';
   if (!started) readiness = 'not_started';
-  else if (!setupDone) readiness = 'started';
-  else if (setupDone && !operateDone) readiness = 'set_up';
-  else if (setupDone && operateDone && !controlDone) readiness = 'operational';
-  else readiness = 'controlled';
-
-  const setupWeight = 50;
-  const operateWeight = 30;
-  const controlWeight = 20;
-  const progress = (bucketTasks: any[], weight: number) => {
-    if (!bucketTasks.length) return 0;
-    const done = bucketTasks.filter((row) => row.status === 'done' && !proofMissingForTask(row)).length;
-    return (done / bucketTasks.length) * weight;
-  };
-  const percentComplete = Math.round(progress(setupRequired, setupWeight) + progress(operateRequired, operateWeight) + progress(controlRequired, controlWeight));
-  const missingEvidenceTasks = tasks.filter((row) => row.evidence_required_flag && row.status === 'done' && proofMissingForTask(row));
-  const missingEvidenceCount = missingEvidenceTasks.length;
-  const nextTask = tasks.find((row) => row.required_flag && row.status !== 'done') || tasks.find((row) => row.status !== 'done');
-
+  else if (doneCount < required.length) readiness = 'started';
+  else readiness = 'set_up';
+  const nextTask = required.find((row) => row.status !== 'done') || null;
   return {
     readiness_state: readiness,
-    percent_complete: percentComplete,
-    missing_evidence_count: missingEvidenceCount,
+    percent_complete: percent,
     next_required_task_code: nextTask?.task_code || '',
-    setup_tasks_done_ignoring_proof: setupTasksDoneIgnoringProof,
     next_required_task_name: nextTask?.task_name || '',
-    missing_evidence_task_name: missingEvidenceTasks[0]?.task_name || '',
   };
+}
+
+function buildActionSummaries(workspace: any, bundle: any) {
+  const tasks = bundle.tasks || [];
+  const blueprint = getBrActionBlueprints({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code });
+  return blueprint.map((action, index) => {
+    const actionTasks = action.tasks.map((task) => tasks.find((row) => row.task_code === task.task_code)).filter(Boolean);
+    const requiredTasks = actionTasks.filter((row) => row.required_flag !== false);
+    const totalTasks = requiredTasks.length;
+    const completedTasks = requiredTasks.filter((row) => row.status === 'done').length;
+    const started = requiredTasks.some((row) => ['in_progress', 'done'].includes(String(row.status || '')));
+    let status = 'not_started';
+    if (completedTasks === totalTasks && totalTasks > 0) status = 'complete';
+    else if (started) status = 'in_progress';
+    const nextTask = requiredTasks.find((row) => row.status !== 'done') || null;
+    return {
+      action_id: action.action_code,
+      action_code: action.action_code,
+      action_title: action.action_title,
+      objective: action.objective,
+      launch_critical: Boolean(action.launch_critical),
+      phase_code: action.phase_code,
+      phase_name: action.phase_name,
+      section_code: action.section_code,
+      section_name: action.section_name,
+      status,
+      total_tasks: totalTasks,
+      completed_tasks: completedTasks,
+      progress_pct: totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      next_task_code: nextTask?.task_code || '',
+      next_task_name: nextTask?.task_name || '',
+      sort_order: index + 1,
+      tasks: action.tasks.map((task, taskIndex) => {
+        const taskRow = tasks.find((row) => row.task_code === task.task_code) || null;
+        return {
+          task_code: task.task_code,
+          task_title: task.task_title,
+          instructions: task.instructions,
+          requirements: task.requirements || [],
+          where_to_do_this: task.where_to_do_this || [],
+          record_and_save: task.record_and_save || [],
+          optional: Boolean(task.optional),
+          status: taskRow?.status || 'not_started',
+          task_instance_id: taskRow?.task_instance_id || '',
+          sort_order: taskIndex + 1,
+        };
+      }),
+    };
+  });
 }
 
 function deriveWorkspaceState(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
-  const evidence = bundle.evidence || [];
+  const actionSummaries = buildActionSummaries(workspace, bundle);
 
   const domainStates = BR_DOMAINS.map((domain, index) => {
     const domainTasks = tasks.filter((row) => row.domain_code === domain.code);
-    const derived = deriveDomainState(domainTasks, evidence);
+    const derived = deriveSectionState(domainTasks);
+    const domainActions = actionSummaries.filter((row) => row.section_code === domain.code);
+    const blockerFlag = domainActions.some((row) => row.launch_critical && row.status !== 'complete');
     return {
       domain_state_id: `${workspace.workspace_id}::${domain.code}`,
       workspace_id: workspace.workspace_id,
@@ -137,9 +161,9 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
       sort_order: index + 1,
       readiness_state: derived.readiness_state,
       percent_complete: derived.percent_complete,
-      blocker_flag: domain.launch_critical && !['set_up', 'operational', 'controlled'].includes(String(derived.readiness_state || '')),
+      blocker_flag: blockerFlag,
       next_required_task_code: derived.next_required_task_code,
-      missing_evidence_count: derived.missing_evidence_count,
+      missing_evidence_count: 0,
       launch_critical: domain.launch_critical,
       last_derived_at: nowIso(),
     };
@@ -150,9 +174,8 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
     const avg = rows.length ? rows.reduce((sum, row) => sum + Number(row.percent_complete || 0), 0) / rows.length : 0;
     const blocked = rows.some((row) => row.blocker_flag);
     let status = 'not_started';
-    if (blocked) status = 'blocked';
-    else if (rows.length && rows.every((row) => ['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')))) status = 'complete';
-    else if (rows.some((row) => Number(row.percent_complete || 0) > 0)) status = 'in_progress';
+    if (rows.every((row) => Number(row.percent_complete || 0) === 100)) status = 'complete';
+    else if (rows.some((row) => Number(row.percent_complete || 0) > 0)) status = blocked ? 'blocked' : 'in_progress';
     return {
       phase_state_id: `${workspace.workspace_id}::${phase.code}`,
       workspace_id: workspace.workspace_id,
@@ -169,56 +192,49 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
   const firstIncompleteIndex = basePhaseStates.findIndex((row) => row.status !== 'complete');
   const phaseStates = basePhaseStates.map((row, index) => {
     if (firstIncompleteIndex >= 0 && index > firstIncompleteIndex) {
-      return {
-        ...row,
-        status: 'locked',
-        percent_complete: 0,
-        blocked_flag: false,
-      };
+      return { ...row, status: 'locked', percent_complete: 0, blocked_flag: false };
     }
     return row;
   });
 
-  const blockers = domainStates
-    .filter((row) => row.launch_critical && !['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')))
-    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-    .map((row, index) => {
-      const proofOnly = row.setup_tasks_done_ignoring_proof && row.missing_evidence_count > 0;
-      return {
-        blocker_id: `${workspace.workspace_id}::BLOCKER::${row.domain_code}`,
-        workspace_id: workspace.workspace_id,
-        blocker_code: row.domain_code,
-        blocker_type: proofOnly ? 'missing_evidence' : 'missing_setup',
-        domain_code: row.domain_code,
-        task_code: row.next_required_task_code || '',
-        title: proofOnly ? `Add proof for ${row.missing_evidence_task_name || row.domain_name}` : (row.next_required_task_name || `Complete ${row.domain_name}`),
-        description: proofOnly
-          ? `This step is marked done, but proof is still missing before ${row.domain_name} can count as properly set up.`
-          : `${row.domain_name} still needs its core setup steps in place before launch can be green.`,
-        severity: index < 4 ? 'critical' : 'high',
-        active_flag: true,
-        sort_order: index + 1,
-        created_at: nowIso(),
-      };
-    });
+  const blockers = actionSummaries
+    .filter((row) => row.launch_critical && row.status !== 'complete')
+    .sort((a, b) => {
+      const phaseDelta = BR_PHASES.findIndex((row) => row.code === a.phase_code) - BR_PHASES.findIndex((row) => row.code === b.phase_code);
+      if (phaseDelta !== 0) return phaseDelta;
+      return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+    })
+    .map((row, index) => ({
+      blocker_id: `${workspace.workspace_id}::BLOCKER::${row.action_code}`,
+      workspace_id: workspace.workspace_id,
+      blocker_code: row.action_code,
+      blocker_type: 'missing_setup',
+      domain_code: row.section_code,
+      task_code: row.next_task_code || '',
+      title: row.action_title,
+      description: row.next_task_name ? `Still needs: ${row.next_task_name}.` : row.objective,
+      severity: index < 3 ? 'critical' : 'high',
+      active_flag: true,
+      sort_order: index + 1,
+      created_at: nowIso(),
+    }));
 
   const requiredLaunchDomainsReady = domainStates
     .filter((row) => BR_LAUNCH_DOMAIN_CODES.includes(row.domain_code))
-    .every((row) => ['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')));
+    .every((row) => Number(row.percent_complete || 0) === 100);
   const launchReadyFlag = requiredLaunchDomainsReady && blockers.length === 0;
-
   const overallScore = domainStates.length ? domainStates.reduce((sum, row) => sum + Number(row.percent_complete || 0), 0) / domainStates.length : 0;
+  const currentPhase = phaseStates.find((row) => row.status !== 'complete' && row.status !== 'locked')?.phase_code || 'phase_5_launch';
+
   let overallReadinessState = 'not_started';
-  if (overallScore > 0 && overallScore < 50) overallReadinessState = 'started';
-  if (overallScore >= 50 && overallScore < 80) overallReadinessState = 'set_up';
-  if (overallScore >= 80 && overallScore < 100) overallReadinessState = 'operational';
-  if (overallScore >= 100) overallReadinessState = 'controlled';
-  const currentPhase = phaseStates.find((row) => row.status !== 'complete')?.phase_code || 'phase_5_launch';
+  if (overallScore > 0 && overallScore < 100) overallReadinessState = 'started';
+  if (overallScore === 100) overallReadinessState = 'set_up';
 
   return {
     domainStates,
     phaseStates,
     blockers,
+    actionSummaries,
     workspacePatch: {
       current_phase_code: currentPhase,
       overall_readiness_state: launchReadyFlag ? 'set_up' : overallReadinessState,
@@ -228,38 +244,65 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
   };
 }
 
-function buildNextActionsFromTasks(tasks: any[], blockers: any[]) {
-  const blockerTaskCodes = new Set(blockers.map((row) => row.task_code).filter(Boolean));
-  return tasks
-    .filter((row) => row.required_flag && row.status !== 'done')
+function buildNextActionsFromActions(actions: any[]) {
+  return actions
+    .filter((row) => row.status !== 'complete')
     .sort((a, b) => {
-      const blockerDelta = Number(blockerTaskCodes.has(b.task_code)) - Number(blockerTaskCodes.has(a.task_code));
-      if (blockerDelta !== 0) return blockerDelta;
-      const launchDelta = Number(Boolean(b.can_block_launch)) - Number(Boolean(a.can_block_launch));
+      const launchDelta = Number(Boolean(b.launch_critical)) - Number(Boolean(a.launch_critical));
       if (launchDelta !== 0) return launchDelta;
+      const phaseDelta = BR_PHASES.findIndex((row) => row.code === a.phase_code) - BR_PHASES.findIndex((row) => row.code === b.phase_code);
+      if (phaseDelta !== 0) return phaseDelta;
       return Number(a.sort_order || 0) - Number(b.sort_order || 0);
     })
     .slice(0, 5)
     .map((row, index) => ({
-      id: `${row.task_code}::${index + 1}`,
-      title: row.task_name,
-      reason: row.task_description,
+      id: `${row.action_code}::${index + 1}`,
+      title: row.action_title,
+      reason: row.objective,
       phase_code: row.phase_code,
-      phase_name: phaseName(row.phase_code),
-      launch_critical: Boolean(row.can_block_launch),
+      phase_name: row.phase_name,
+      launch_critical: row.launch_critical,
       priority_rank: index + 1,
-      task_instance_id: row.task_instance_id,
-      task_code: row.task_code,
+      action_code: row.action_code,
+      next_task_code: row.next_task_code,
+      next_task_name: row.next_task_name,
     }));
+}
+
+function buildImplementationPlan(workspace: any, bundle: any) {
+  const actionMap = new Map(buildActionSummaries(workspace, bundle).map((row) => [row.action_code, row]));
+  const blueprint = getBrImplementationBlueprint({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code });
+  return blueprint.map((phase) => ({
+    phase_code: phase.phase_code,
+    phase_name: phase.phase_name,
+    sections: phase.sections.map((section) => ({
+      section_code: section.section_code,
+      section_name: section.section_name,
+      actions: section.actions.map((action) => {
+        const summary = actionMap.get(action.action_code);
+        return {
+          action_code: action.action_code,
+          action_title: action.action_title,
+          objective: action.objective,
+          launch_critical: Boolean(action.launch_critical),
+          status: summary?.status || 'not_started',
+          completed_tasks: summary?.completed_tasks || 0,
+          total_tasks: summary?.total_tasks || action.tasks.length,
+          progress_pct: summary?.progress_pct || 0,
+          tasks: summary?.tasks || [],
+        };
+      }),
+    })),
+  }));
 }
 
 function buildSponsorSummary(workspace: any, blockers: any[], nextActions: any[]) {
   if (!workspace) return 'Business Readiness has not been configured yet.';
   const region = getBrRegionLabel(workspace.primary_region_code);
   const businessType = getBrBusinessTypeLabel(workspace.business_type_code);
-  if (!blockers.length) return `The ${businessType} setup for ${region} has no active launch blockers right now. Focus next on moving the remaining setup into stable operation and control.`;
-  const top = nextActions.slice(0, 3).map((row) => row.title).join(', ');
-  return `This ${businessType} workspace for ${region} has been started, but launch is still blocked by ${blockers.length} critical setup gaps. The most important next moves are ${top}.`;
+  if (!blockers.length) return `The ${businessType} setup for ${region} has no active launch blockers right now. Focus next on finishing the remaining setup actions so the business can launch cleanly.`;
+  const top = nextActions.slice(0, 3).map((row) => row.title.toLowerCase()).join(', ');
+  return `The ${businessType} setup for ${region} is still in progress. The main priorities right now are ${top}. Those actions should be completed before launch moves forward.`;
 }
 
 async function persistDerivedWorkspaceState(assessmentId: string) {
@@ -271,42 +314,50 @@ async function persistDerivedWorkspaceState(assessmentId: string) {
   await replaceBrPhaseStates(workspace.workspace_id, derived.phaseStates);
   await replaceBrBlockers(workspace.workspace_id, derived.blockers);
   await updateBrWorkspace(workspace.workspace_id, derived.workspacePatch);
-  return { workspace: { ...workspace, ...derived.workspacePatch }, bundle: await getBrWorkspaceBundle(workspace.workspace_id), derived };
+  return derived;
+}
+
+async function ensureCurrentTemplate(assessmentId: string) {
+  const workspace = await getBrWorkspaceByAssessment(assessmentId);
+  if (!workspace) return null;
+  if (workspace.template_version === BR_TEMPLATE_VERSION) return workspace;
+  const taskInstances = buildTaskInstances(workspace.workspace_id, workspace.business_type_code, workspace.primary_region_code);
+  await replaceBrTaskInstances(workspace.workspace_id, taskInstances);
+  return updateBrWorkspace(workspace.workspace_id, { template_version: BR_TEMPLATE_VERSION, current_phase_code: 'phase_0_define' });
 }
 
 export async function getBusinessReadinessPayload(assessmentId: string) {
-  const assessment = await getAssessmentById(assessmentId);
-  if (!assessment) throw new Error(`Assessment ${assessmentId} was not found.`);
-  const workspace = await getBrWorkspaceByAssessment(assessmentId);
+  await ensureAssessmentModules(assessmentId);
+  await ensureCurrentTemplate(assessmentId);
+  let workspace = await getBrWorkspaceByAssessment(assessmentId);
   if (!workspace) {
     return {
-      assessmentId,
-      workspace: null,
-      catalog: { businessTypes: BR_BUSINESS_TYPES, regions: BR_REGIONS, phases: BR_PHASES, domains: BR_DOMAINS },
-      phaseStates: [],
-      domainStates: [],
-      tasks: [],
-      blockers: [],
-      evidence: [],
-      nextActions: [],
-      sponsorSummary: 'Start by choosing the kind of business you are building and where it will operate.',
+      hasWorkspace: false,
+      businessTypes: BR_BUSINESS_TYPES,
+      regions: BR_REGIONS,
     };
   }
-  const { bundle } = await persistDerivedWorkspaceState(assessmentId) || { bundle: await getBrWorkspaceBundle(workspace.workspace_id) };
-  const nextActions = buildNextActionsFromTasks(bundle.tasks || [], bundle.blockers || []);
+  await persistDerivedWorkspaceState(assessmentId);
+  workspace = await getBrWorkspaceByAssessment(assessmentId);
+  const bundle = await getBrWorkspaceBundle(workspace.workspace_id);
+  const actionSummaries = buildActionSummaries(workspace, bundle);
+  const nextActions = buildNextActionsFromActions(actionSummaries);
+  const implementationPlan = buildImplementationPlan(workspace, bundle);
   return {
-    assessmentId,
-    workspace: await getBrWorkspaceByAssessment(assessmentId),
+    hasWorkspace: true,
+    workspace,
     profile: bundle.profile,
     regionProfile: bundle.regionProfile,
-    catalog: { businessTypes: BR_BUSINESS_TYPES, regions: BR_REGIONS, phases: BR_PHASES, domains: BR_DOMAINS },
     phaseStates: bundle.phases || [],
-    domainStates: bundle.domains || [],
-    tasks: bundle.tasks || [],
+    sectionStates: bundle.domains || [],
     blockers: bundle.blockers || [],
-    evidence: bundle.evidence || [],
+    tasks: bundle.tasks || [],
     nextActions,
-    sponsorSummary: buildSponsorSummary(workspace, bundle.blockers || [], nextActions),
+    actionSummaries,
+    implementationPlan,
+    summary: buildSponsorSummary(workspace, bundle.blockers || [], nextActions),
+    businessTypes: BR_BUSINESS_TYPES,
+    regions: BR_REGIONS,
   };
 }
 
@@ -324,37 +375,27 @@ export async function initializeBusinessReadiness(input: {
   whatYouSell?: string | null;
 }) {
   const assessment = await getAssessmentById(input.assessmentId);
-  if (!assessment) throw new Error(`Assessment ${input.assessmentId} was not found.`);
+  if (!assessment?.client_id) throw new Error('Assessment not found.');
   await ensureAssessmentModules(input.assessmentId);
 
-  let workspace = await getBrWorkspaceByAssessment(input.assessmentId);
-  if (!workspace) {
-    workspace = await createBrWorkspace({
-      assessmentId: input.assessmentId,
-      clientId: assessment.client_id,
-      businessTypeCode: input.businessTypeCode,
-      primaryRegionCode: input.primaryRegionCode,
-      subRegionCode: input.subRegionCode,
-      businessName: input.businessName,
-      founderName: input.founderName,
-      businessDescription: input.businessDescription,
-      targetCustomer: input.targetCustomer,
-      revenueModel: input.revenueModel,
-      operatingChannel: input.operatingChannel,
-      whatYouSell: input.whatYouSell,
-    });
-  } else {
-    workspace = await updateBrWorkspace(workspace.workspace_id, {
-      business_type_code: input.businessTypeCode,
-      primary_region_code: input.primaryRegionCode,
-      sub_region_code: input.subRegionCode || '',
-      current_phase_code: 'phase_0_define',
-      template_version: 'br-v2',
-    });
-  }
+  const workspace = await createBrWorkspace({
+    assessmentId: input.assessmentId,
+    clientId: assessment.client_id,
+    businessTypeCode: input.businessTypeCode,
+    primaryRegionCode: input.primaryRegionCode,
+    subRegionCode: input.subRegionCode,
+    businessName: input.businessName,
+    founderName: input.founderName,
+    businessDescription: input.businessDescription,
+    targetCustomer: input.targetCustomer,
+    revenueModel: input.revenueModel,
+    operatingChannel: input.operatingChannel,
+    whatYouSell: input.whatYouSell,
+  });
 
   const taskInstances = buildTaskInstances(workspace.workspace_id, input.businessTypeCode, input.primaryRegionCode);
   await replaceBrTaskInstances(workspace.workspace_id, taskInstances);
+  await updateBrWorkspace(workspace.workspace_id, { template_version: BR_TEMPLATE_VERSION });
   await persistDerivedWorkspaceState(input.assessmentId);
   await computeAndPersistBusinessReadiness(input.assessmentId);
   return getBusinessReadinessPayload(input.assessmentId);
@@ -372,8 +413,6 @@ export async function setBusinessReadinessTaskStatus(input: { assessmentId: stri
 export async function addBusinessReadinessEvidence(input: { assessmentId: string; taskInstanceId: string; noteText?: string | null; externalLink?: string | null; evidenceType?: string | null; replaceExisting?: boolean; }) {
   const workspace = await getBrWorkspaceByAssessment(input.assessmentId);
   if (!workspace) throw new Error('Business Readiness workspace has not been created yet.');
-  const task = await getBrTaskInstance(input.taskInstanceId);
-  if (!task) throw new Error('Task not found.');
   if (input.replaceExisting) await deleteBrEvidenceByTask(workspace.workspace_id, input.taskInstanceId);
   await addBrEvidence({
     workspaceId: workspace.workspace_id,
@@ -382,9 +421,6 @@ export async function addBusinessReadinessEvidence(input: { assessmentId: string
     noteText: input.noteText || '',
     externalLink: input.externalLink || '',
   });
-  if (task.status !== 'done') {
-    await updateBrTaskInstance(input.taskInstanceId, { status: 'done' });
-  }
   await persistDerivedWorkspaceState(input.assessmentId);
   await computeAndPersistBusinessReadiness(input.assessmentId);
   return getBusinessReadinessPayload(input.assessmentId);
@@ -407,30 +443,30 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
   const workspace = await getBrWorkspaceByAssessment(assessmentId);
   if (!workspace) return null;
   const bundle = await getBrWorkspaceBundle(workspace.workspace_id);
+  const actionSummaries = buildActionSummaries(workspace, bundle);
+  const nextActions = buildNextActionsFromActions(actionSummaries);
   const domains = bundle.domains || [];
   const blockers = bundle.blockers || [];
   const phaseStates = bundle.phases || [];
-  const tasks = bundle.tasks || [];
-  const nextActions = buildNextActionsFromTasks(tasks, blockers);
 
   const domainScores = domains.map((row: any) => ({
     domain_score_id: `${assessmentId}::${moduleIdFromCode('BR')}::${row.domain_code}`,
     assessment_id: assessmentId,
     module_id: moduleIdFromCode('BR'),
     domain_id: row.domain_code,
-    domain_name: row.domain_name || domainName(row.domain_code),
-    raw_score_total: scoreFromReadiness(row.readiness_state),
+    domain_name: row.domain_name,
+    raw_score_total: Number(row.percent_complete || scoreFromReadiness(row.readiness_state)),
     max_score_total: 100,
     score_pct: Number(row.percent_complete || scoreFromReadiness(row.readiness_state)),
-    maturity_band: bandFromReadinessPercent(Number(row.percent_complete || scoreFromReadiness(row.readiness_state))),
+    maturity_band: bandFromReadinessPercent(Number(row.percent_complete || 0)),
     questions_answered: Number(row.percent_complete || 0) > 0 ? 1 : 0,
     questions_total: 1,
-    is_complete: ['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '').toLowerCase()),
+    is_complete: Number(row.percent_complete || 0) === 100,
     metadata: { readiness_state: row.readiness_state, phase_code: row.phase_code, launch_critical: row.launch_critical },
   }));
 
   const scorePct = domainScores.length ? domainScores.reduce((sum: number, row: any) => sum + Number(row.score_pct || 0), 0) / domainScores.length : 0;
-  const completedDomains = domainScores.filter((row: any) => Number(row.score_pct || 0) >= 50).length;
+  const completedDomains = domainScores.filter((row: any) => Number(row.score_pct || 0) >= 100).length;
   const summaryPayload = {
     executive_narrative: [buildSponsorSummary(workspace, blockers, nextActions)],
     phase_states: phaseStates.map((row: any) => ({ phase_code: row.phase_code, phase_name: row.phase_name, status: row.status, percent_complete: row.percent_complete })),
@@ -446,16 +482,16 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     assessment_id: assessmentId,
     module_id: moduleIdFromCode('BR'),
     domain_id: row.domain_code,
-    workflow_id: row.task_code || row.domain_code,
-    question_id: row.task_code || row.domain_code,
-    source_library_id: row.task_code || row.domain_code,
+    workflow_id: row.task_code || row.blocker_code,
+    question_id: row.task_code || row.blocker_code,
+    source_library_id: row.task_code || row.blocker_code,
     severity_band: String(row.severity || 'high').toUpperCase(),
     finding_title: row.title,
     finding_narrative: row.description,
     business_impact: 'This setup gap can delay launch readiness and weaken early operating control.',
-    likely_root_cause: 'The required readiness step is either incomplete or still missing proof.',
-    evidence_required: row.blocker_type === 'missing_evidence' ? 'Yes' : 'Possibly',
-    evidence_strength: row.blocker_type === 'missing_evidence' ? 'Missing' : 'Partial',
+    likely_root_cause: 'The required Business Readiness action is still incomplete.',
+    evidence_required: 'No',
+    evidence_strength: 'Not applicable',
     is_priority: true,
     metadata: { blocker_type: row.blocker_type },
     created_at: nowIso(),
@@ -467,11 +503,11 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     assessment_id: assessmentId,
     module_id: moduleIdFromCode('BR'),
     linked_finding_instance_id: findings[index]?.finding_instance_id || '',
-    source_library_id: row.task_code || row.id,
+    source_library_id: row.action_code || row.id,
     recommendation_title: row.title,
     recommendation_text: row.reason,
-    expected_outcome: 'This should move the business closer to launch readiness.',
-    implementation_notes: `Start in ${row.phase_name}.`,
+    expected_outcome: 'This should move the business one step closer to clean launch readiness.',
+    implementation_notes: row.next_task_name ? `Start with: ${row.next_task_name}.` : `Start in ${row.phase_name}.`,
     priority_rank: index + 1,
     priority_level: index === 0 ? 'HIGH' : 'MEDIUM',
     owner_role: 'Founder / Owner',
@@ -485,17 +521,17 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     assessment_id: assessmentId,
     module_id: moduleIdFromCode('BR'),
     linked_recommendation_instance_id: recommendations[index]?.recommendation_instance_id || '',
-    source_library_id: row.task_code || row.id,
+    source_library_id: row.action_code || row.id,
     action_title: row.title,
     action_text: row.reason,
     owner_role: 'Founder / Owner',
     action_deliverable: row.title,
-    success_measure: 'Task completed with the required proof where relevant.',
+    success_measure: row.next_task_name ? `Complete: ${row.next_task_name}` : 'Finish the action.',
     effort_level: row.launch_critical ? 'MEDIUM' : 'LOW',
     timeline_band: row.launch_critical ? 'P1' : 'P2',
     indicative_timeline: row.launch_critical ? 'Immediate' : '30 days',
     priority_level: row.launch_critical ? 'HIGH' : 'MEDIUM',
-    metadata: { task_instance_id: row.task_instance_id, phase_code: row.phase_code },
+    metadata: { action_code: row.action_code, phase_code: row.phase_code },
     created_at: nowIso(),
     updated_at: nowIso(),
   }));
@@ -507,7 +543,7 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
       assessment_id: assessmentId,
       module_id: moduleIdFromCode('BR'),
       linked_action_instance_id: actions[index]?.action_instance_id || '',
-      source_library_id: row.task_code || row.id,
+      source_library_id: row.action_code || row.id,
       phase_code: band.code,
       phase_name: band.name,
       initiative_title: row.title,
@@ -517,7 +553,7 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
       dependency_code: '',
       dependency_summary: '',
       target_outcome: 'Move the business one step closer to proper launch readiness.',
-      success_measure: 'Step completed and reflected in Business Readiness.',
+      success_measure: row.next_task_name ? `Complete: ${row.next_task_name}` : 'Finish the action.',
       execution_status: 'NOT_STARTED',
       status: 'NOT_STARTED',
       progress_pct: 0,
@@ -526,7 +562,7 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
       source_finding_instance_id: findings[index]?.finding_instance_id || '',
       source_action_instance_id: actions[index]?.action_instance_id || '',
       initiative_description: row.reason,
-      linked_metric_id: row.task_code || '',
+      linked_metric_id: row.action_code || '',
       baseline_value: 'Not done',
       target_value: 'Done',
       review_frequency: band.code === 'P3' ? 'Monthly' : 'Weekly',
@@ -536,10 +572,9 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
       source_module_ids: moduleIdFromCode('BR'),
       source_row_ids: row.id,
       metadata: {
-        br_domain_code: tasks.find((task) => task.task_instance_id === row.task_instance_id)?.domain_code || '',
         br_internal_phase_code: row.phase_code,
         br_internal_phase_name: row.phase_name,
-        br_task_code: row.task_code || '',
+        br_action_code: row.action_code,
         br_launch_critical: Boolean(row.launch_critical),
         br_region_code: workspace.primary_region_code,
         br_business_type: workspace.business_type_code,
@@ -558,15 +593,33 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     score_pct: Number(scorePct.toFixed(2)),
     maturity_band: bandFromReadinessPercent(scorePct),
     domains_completed: completedDomains,
-    domains_total: domains.length,
-    questions_answered: tasks.filter((row: any) => row.status === 'done').length,
-    questions_total: tasks.length,
-    is_complete: workspace.launch_ready_flag,
-    readiness_status: readinessLabel(workspace.overall_readiness_state),
-    critical_exposures: blockers.filter((row: any) => row.severity === 'critical').length,
-    calculated_at: nowIso(),
-    metadata: { launch_ready_flag: workspace.launch_ready_flag, blocker_count: blockers.length },
+    domains_total: domainScores.length,
+    questions_answered: actionSummaries.filter((row) => row.status !== 'not_started').length,
+    questions_total: actionSummaries.length,
+    is_complete: Boolean(workspace.launch_ready_flag),
+    readiness_status: workspace.launch_ready_flag ? 'READY' : 'IN_PROGRESS',
+    metadata: {
+      blocker_count: blockers.length,
+      launch_ready_flag: workspace.launch_ready_flag,
+      current_phase_code: workspace.current_phase_code,
+    },
   };
+
+  const runtimeState = {
+    workspaceId: workspace.workspace_id,
+    businessTypeCode: workspace.business_type_code,
+    regionCode: workspace.primary_region_code,
+    currentPhaseCode: workspace.current_phase_code,
+    launchReadyFlag: workspace.launch_ready_flag,
+    activeBlockerCount: blockers.length,
+    templateVersion: workspace.template_version,
+  };
+
+  await updateAssessmentModuleState(assessmentId, 'BR', runtimeState, {
+    moduleStatus: workspace.launch_ready_flag ? 'COMPLETE' : 'IN_PROGRESS',
+    completionPct: Math.round(scorePct),
+    summaryPayload,
+  });
 
   await replaceModuleArtifacts(assessmentId, 'BR', {
     domainScores,
@@ -575,24 +628,7 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     recommendations,
     actions,
     roadmap,
-    summaryPayload,
-    moduleStatus: workspace.launch_ready_flag ? 'COMPLETE' : blockers.length ? 'IN_PROGRESS' : 'NOT_STARTED',
-    completionPct: Math.min(100, Math.round(scorePct)),
   });
 
-  await updateAssessmentModuleState(assessmentId, 'BR', {
-    workspace_id: workspace.workspace_id,
-    business_type_code: workspace.business_type_code,
-    region_code: workspace.primary_region_code,
-    current_phase_code: workspace.current_phase_code,
-    launch_ready_flag: workspace.launch_ready_flag,
-    blocker_count: blockers.length,
-    next_actions: nextActions,
-  }, {
-    moduleStatus: workspace.launch_ready_flag ? 'COMPLETE' : blockers.length ? 'IN_PROGRESS' : 'NOT_STARTED',
-    completionPct: Math.min(100, Math.round(scorePct)),
-    summaryPayload,
-  });
-
-  return { scorePct, blockers: blockers.length, launchReadyFlag: workspace.launch_ready_flag };
+  return { domainScores, moduleScore, findings, recommendations, actions, roadmap, summaryPayload };
 }
