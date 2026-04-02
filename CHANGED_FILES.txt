@@ -1,0 +1,3 @@
+src/app/(readiness)/readiness/business-readiness/page.tsx
+src/components/business-readiness/business-readiness-client.tsx
+src/lib/services/business-readiness.ts

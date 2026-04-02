@@ -19,6 +19,7 @@ export default async function BusinessReadinessPage({ searchParams }: PageProps)
     { key: 'overview', label: 'Overview' },
     { key: 'phases', label: 'Phases' },
     { key: 'tasks', label: 'Tasks' },
+    { key: 'evidence', label: 'Evidence' },
     { key: 'blockers', label: 'Blockers' },
   ];
 

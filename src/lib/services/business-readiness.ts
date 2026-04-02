@@ -85,6 +85,7 @@ function deriveDomainState(tasks: any[], evidence: any[]) {
     const linked = evidence.filter((item) => item.task_instance_id === task.task_instance_id && item.review_status !== 'needs_attention');
     return linked.length === 0;
   };
+  const setupTasksDoneIgnoringProof = setupRequired.every((row) => row.status === 'done');
   const setupDone = setupRequired.every((row) => row.status === 'done' && !proofMissingForTask(row));
   const operateDone = operateRequired.every((row) => row.status === 'done');
   const controlDone = controlRequired.every((row) => row.status === 'done');
@@ -100,12 +101,13 @@ function deriveDomainState(tasks: any[], evidence: any[]) {
   const operateWeight = 30;
   const controlWeight = 20;
   const progress = (bucketTasks: any[], weight: number) => {
-    if (!bucketTasks.length) return weight;
+    if (!bucketTasks.length) return 0;
     const done = bucketTasks.filter((row) => row.status === 'done' && !proofMissingForTask(row)).length;
     return (done / bucketTasks.length) * weight;
   };
   const percentComplete = Math.round(progress(setupRequired, setupWeight) + progress(operateRequired, operateWeight) + progress(controlRequired, controlWeight));
-  const missingEvidenceCount = tasks.filter((row) => row.evidence_required_flag && proofMissingForTask(row)).length;
+  const missingEvidenceTasks = tasks.filter((row) => row.evidence_required_flag && row.status === 'done' && proofMissingForTask(row));
+  const missingEvidenceCount = missingEvidenceTasks.length;
   const nextTask = tasks.find((row) => row.required_flag && row.status !== 'done') || tasks.find((row) => row.status !== 'done');
 
   return {
@@ -113,6 +115,9 @@ function deriveDomainState(tasks: any[], evidence: any[]) {
     percent_complete: percentComplete,
     missing_evidence_count: missingEvidenceCount,
     next_required_task_code: nextTask?.task_code || '',
+    setup_tasks_done_ignoring_proof: setupTasksDoneIgnoringProof,
+    next_required_task_name: nextTask?.task_name || '',
+    missing_evidence_task_name: missingEvidenceTasks[0]?.task_name || '',
   };
 }
 
@@ -140,13 +145,13 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
     };
   });
 
-  const phaseStates = BR_PHASES.map((phase, index) => {
+  const basePhaseStates = BR_PHASES.map((phase, index) => {
     const rows = domainStates.filter((row) => row.phase_code === phase.code);
     const avg = rows.length ? rows.reduce((sum, row) => sum + Number(row.percent_complete || 0), 0) / rows.length : 0;
     const blocked = rows.some((row) => row.blocker_flag);
     let status = 'not_started';
     if (blocked) status = 'blocked';
-    else if (rows.every((row) => ['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')))) status = 'complete';
+    else if (rows.length && rows.every((row) => ['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')))) status = 'complete';
     else if (rows.some((row) => Number(row.percent_complete || 0) > 0)) status = 'in_progress';
     return {
       phase_state_id: `${workspace.workspace_id}::${phase.code}`,
@@ -161,24 +166,41 @@ function deriveWorkspaceState(workspace: any, bundle: any) {
     };
   });
 
+  const firstIncompleteIndex = basePhaseStates.findIndex((row) => row.status !== 'complete');
+  const phaseStates = basePhaseStates.map((row, index) => {
+    if (firstIncompleteIndex >= 0 && index > firstIncompleteIndex) {
+      return {
+        ...row,
+        status: 'locked',
+        percent_complete: 0,
+        blocked_flag: false,
+      };
+    }
+    return row;
+  });
+
   const blockers = domainStates
     .filter((row) => row.launch_critical && !['set_up', 'operational', 'controlled'].includes(String(row.readiness_state || '')))
-    .map((row, index) => ({
-      blocker_id: `${workspace.workspace_id}::BLOCKER::${row.domain_code}`,
-      workspace_id: workspace.workspace_id,
-      blocker_code: row.domain_code,
-      blocker_type: row.missing_evidence_count > 0 ? 'missing_evidence' : 'missing_setup',
-      domain_code: row.domain_code,
-      task_code: row.next_required_task_code || '',
-      title: row.missing_evidence_count > 0 ? `Add proof for ${row.domain_name}` : `Complete ${row.domain_name}`,
-      description: row.missing_evidence_count > 0
-        ? `${row.domain_name} has been started, but proof is still missing for one or more required steps.`
-        : `${row.domain_name} must reach at least Set up before launch can be green.`,
-      severity: index < 4 ? 'critical' : 'high',
-      active_flag: true,
-      sort_order: index + 1,
-      created_at: nowIso(),
-    }));
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+    .map((row, index) => {
+      const proofOnly = row.setup_tasks_done_ignoring_proof && row.missing_evidence_count > 0;
+      return {
+        blocker_id: `${workspace.workspace_id}::BLOCKER::${row.domain_code}`,
+        workspace_id: workspace.workspace_id,
+        blocker_code: row.domain_code,
+        blocker_type: proofOnly ? 'missing_evidence' : 'missing_setup',
+        domain_code: row.domain_code,
+        task_code: row.next_required_task_code || '',
+        title: proofOnly ? `Add proof for ${row.missing_evidence_task_name || row.domain_name}` : (row.next_required_task_name || `Complete ${row.domain_name}`),
+        description: proofOnly
+          ? `This step is marked done, but proof is still missing before ${row.domain_name} can count as properly set up.`
+          : `${row.domain_name} still needs its core setup steps in place before launch can be green.`,
+        severity: index < 4 ? 'critical' : 'high',
+        active_flag: true,
+        sort_order: index + 1,
+        created_at: nowIso(),
+      };
+    });
 
   const requiredLaunchDomainsReady = domainStates
     .filter((row) => BR_LAUNCH_DOMAIN_CODES.includes(row.domain_code))
