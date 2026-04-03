@@ -1,5 +1,4 @@
 'use client';
-// @ts-nocheck
 
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -34,7 +33,7 @@ function TaskStatusSelect({ value, onChange, disabled }: { value?: string | null
   return (
     <select
       value={value || 'not_started'}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e: any) => onChange(e.target.value)}
       disabled={disabled}
       style={{
         minWidth: 150,
@@ -222,8 +221,8 @@ function TaskRow({
                   ) : null}
                   {composerOpen && !previewMode ? (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 8, marginTop: 10 }}>
-                      <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                      <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                      <input value={docDraft.name} onChange={(e: any) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                      <input value={docDraft.link} onChange={(e: any) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
                       <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
                       <button onClick={onOpenDocuments} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Open in Documents</button>
                     </div>
@@ -652,30 +651,30 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
           <div style={{ display: 'grid', gap: 12, marginTop: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
             <label>
               <SmallMuted>Business type</SmallMuted>
-              <select value={initForm.businessTypeCode} onChange={(e) => setInitForm((current: any) => ({ ...current, businessTypeCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+              <select value={initForm.businessTypeCode} onChange={(e: any) => setInitForm((current: any) => ({ ...current, businessTypeCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
             </label>
             <label>
               <SmallMuted>Region</SmallMuted>
-              <select value={initForm.primaryRegionCode} onChange={(e) => setInitForm((current: any) => ({ ...current, primaryRegionCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+              <select value={initForm.primaryRegionCode} onChange={(e: any) => setInitForm((current: any) => ({ ...current, primaryRegionCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
             </label>
             <label>
               <SmallMuted>Business name</SmallMuted>
-              <input value={initForm.businessName} onChange={(e) => setInitForm((current: any) => ({ ...current, businessName: e.target.value }))} placeholder="Example: Kinto Test Advisory" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.businessName} onChange={(e: any) => setInitForm((current: any) => ({ ...current, businessName: e.target.value }))} placeholder="Example: Kinto Test Advisory" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>Founder name</SmallMuted>
-              <input value={initForm.founderName} onChange={(e) => setInitForm((current: any) => ({ ...current, founderName: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.founderName} onChange={(e: any) => setInitForm((current: any) => ({ ...current, founderName: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>What will you sell?</SmallMuted>
-              <input value={initForm.whatYouSell} onChange={(e) => setInitForm((current: any) => ({ ...current, whatYouSell: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.whatYouSell} onChange={(e: any) => setInitForm((current: any) => ({ ...current, whatYouSell: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>Target customer</SmallMuted>
-              <input value={initForm.targetCustomer} onChange={(e) => setInitForm((current: any) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.targetCustomer} onChange={(e: any) => setInitForm((current: any) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 24 }}>
-              <input type="checkbox" checked={Boolean(initForm.hiringStaff)} onChange={(e) => setInitForm((current: any) => ({ ...current, hiringStaff: e.target.checked }))} />
+              <input type="checkbox" checked={Boolean(initForm.hiringStaff)} onChange={(e: any) => setInitForm((current: any) => ({ ...current, hiringStaff: e.target.checked }))} />
               <span style={{ fontSize: 13, color: '#374151' }}>I plan to hire staff soon</span>
             </label>
           </div>
@@ -744,14 +743,14 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 220px))', gap: 10, marginTop: 12 }}>
           <label>
             <SmallMuted>Business type</SmallMuted>
-            <select value={previewBusinessTypeCode} onChange={(e) => setPreviewBusinessTypeCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+            <select value={previewBusinessTypeCode} onChange={(e: any) => setPreviewBusinessTypeCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
           </label>
           <label>
             <SmallMuted>Region</SmallMuted>
-            <select value={previewRegionCode} onChange={(e) => setPreviewRegionCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+            <select value={previewRegionCode} onChange={(e: any) => setPreviewRegionCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
           </label>
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 28 }}>
-            <input type="checkbox" checked={previewEmployerIntent} onChange={(e) => setPreviewEmployerIntent(e.target.checked)} />
+            <input type="checkbox" checked={previewEmployerIntent} onChange={(e: any) => setPreviewEmployerIntent(e.target.checked)} />
             <span style={{ fontSize: 13, color: '#374151' }}>Preview hiring intent</span>
           </label>
         </div>
@@ -902,12 +901,12 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
           </Card>
           <Card style={{ borderLeftColor: '#cbd5e1' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(180px, 220px) minmax(180px, 220px)', gap: 10, marginBottom: 12 }}>
-              <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, phases, sections, actions, or tasks" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-              <select value={documentPhaseFilter} onChange={(e) => setDocumentPhaseFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
+              <input value={documentSearch} onChange={(e: any) => setDocumentSearch(e.target.value)} placeholder="Search documents, phases, sections, actions, or tasks" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+              <select value={documentPhaseFilter} onChange={(e: any) => setDocumentPhaseFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
                 <option value="all">All phases</option>
                 {phaseSummaries.map((row: any) => <option key={row.phase_code} value={row.phase_code}>{row.phase_name}</option>)}
               </select>
-              <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
+              <select value={documentTypeFilter} onChange={(e: any) => setDocumentTypeFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
                 <option value="all">All types</option>
                 {documentTypes.map((row: any) => <option key={row} value={row}>{sentenceCase(row)}</option>)}
               </select>
