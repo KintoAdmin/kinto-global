@@ -67,7 +67,7 @@ export async function createBrWorkspace(input: {
     overall_readiness_state: 'started',
     launch_ready_flag: false,
     active_blocker_count: 0,
-    template_version: 'br-v4-structure-reset',
+    template_version: 'br-v8-south-africa-content',
     created_at: ts,
     updated_at: ts,
   };
