@@ -38,6 +38,7 @@ export async function POST(request: Request) {
         revenueModel: body.revenueModel,
         operatingChannel: body.operatingChannel,
         whatYouSell: body.whatYouSell,
+        hiringStaff: body.hiringStaff,
       });
       return jsonOk(payload);
     }

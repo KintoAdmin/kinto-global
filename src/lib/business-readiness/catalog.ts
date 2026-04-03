@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const BR_TEMPLATE_VERSION = 'br-v10-playbook-overlays';
+export const BR_TEMPLATE_VERSION = 'br-v11-employer-readiness';
 
 export const BR_BUSINESS_TYPES = [
   { code: 'retail_shop', label: 'Retail / Shop' },
@@ -443,14 +443,75 @@ const COMMON_STRUCTURE = [
   },
 ];
 
-export const BR_DOMAINS = COMMON_STRUCTURE.flatMap((phase) =>
-  phase.sections.map((section) => ({
-    code: section.section_code,
-    phase_code: phase.phase_code,
-    name: section.section_name,
-    launch_critical: section.actions.some((action) => action.launch_critical),
-  })),
-);
+
+const EMPLOYER_READINESS_SECTION = {
+  section_code: 'd11_employer_readiness',
+  section_name: 'Employer Readiness',
+  actions: [
+    {
+      action_code: 'a11_prepare_first_employer',
+      action_title: 'Prepare first employer setup',
+      objective: 'Put the basic employer setup in place before the business hires its first employee.',
+      launch_critical: false,
+      tasks: [
+        {
+          task_code: 't01_confirm_worker_type',
+          task_title: 'Confirm whether the first worker will be an employee or contractor',
+          instructions: 'Decide whether the first person you bring into the business will be engaged as an employee or as an independent contractor. Do not assume these are the same thing.',
+          requirements: ['planned role', 'expected working arrangement', 'decision on employment or contractor model'],
+          where_to_do_this: ['internal hiring note', 'advisor or labour guidance if unclear'],
+          record_and_save: ['worker type decision', 'role note', 'save in the Employer Setup folder'],
+        },
+        {
+          task_code: 't02_check_employer_registrations',
+          task_title: 'Check the employer registrations that will apply',
+          instructions: 'Check which employer registrations and labour administration steps apply before the first employee starts work.',
+          requirements: ['worker type decision', 'region selected', 'legal structure', 'expected start date'],
+          where_to_do_this: ['labour or tax authority guidance', 'accountant or payroll advisor if needed'],
+          record_and_save: ['employer registration checklist', 'authorities to use', 'save in the Employer Setup folder'],
+        },
+        {
+          task_code: 't03_prepare_worker_records',
+          task_title: 'Prepare the first worker onboarding records',
+          instructions: 'Create the basic employee or worker records the business will need before the first start date.',
+          requirements: ['worker type decision', 'worker details list', 'employment start information'],
+          where_to_do_this: ['employment file checklist', 'document folder structure'],
+          record_and_save: ['worker onboarding checklist', 'required records list', 'save in the Employer Setup folder'],
+        },
+        {
+          task_code: 't04_set_payroll_admin_method',
+          task_title: 'Set the payroll or worker admin method',
+          instructions: 'Choose how the business will handle payroll or worker payment administration before the first worker starts.',
+          requirements: ['worker type decision', 'payment frequency', 'person responsible for admin'],
+          where_to_do_this: ['spreadsheet, payroll tool, or payroll provider'],
+          record_and_save: ['chosen payroll/admin method', 'person responsible', 'save in the Employer Setup folder'],
+        },
+      ],
+    },
+  ],
+};
+
+function withEmployerReadiness(phases, employerIntent) {
+  if (!employerIntent) return phases;
+  return phases.map((phase) => {
+    if (phase.phase_code !== 'phase_4_control') return phase;
+    return { ...phase, sections: [...phase.sections, EMPLOYER_READINESS_SECTION] };
+  });
+}
+
+export function getBrDomains(input) {
+  const phases = withEmployerReadiness(COMMON_STRUCTURE, Boolean(input?.employerIntent));
+  return phases.flatMap((phase) =>
+    phase.sections.map((section) => ({
+      code: section.section_code,
+      phase_code: phase.phase_code,
+      name: section.section_name,
+      launch_critical: section.actions.some((action) => action.launch_critical),
+    })),
+  );
+}
+
+export const BR_DOMAINS = getBrDomains({});
 
 export const BR_LAUNCH_DOMAIN_CODES = BR_DOMAINS.filter((row) => row.launch_critical).map((row) => row.code);
 
@@ -602,6 +663,25 @@ function applyRegionText(task, regionCode) {
         record_and_save: ['data handling note', 'storage rule', 'save in the Compliance folder'],
       };
     }
+
+    if (task.task_code === 't01_confirm_worker_type') {
+      return {
+        ...task,
+        instructions: 'Decide whether the first person you bring into the business will be an employee or an independent contractor. Do not assume the same admin and tax rules apply to both.',
+        requirements: ['planned role', 'expected working arrangement', 'employment start plan'],
+        where_to_do_this: ['internal hiring note', 'accountant or labour advisor if unclear'],
+        record_and_save: ['worker type decision', 'role note', 'save in the Employer Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_check_employer_registrations') {
+      return {
+        ...task,
+        instructions: 'Check which employer registrations apply before the first employee starts. In South Africa, employers who need to register with SARS for PAYE and/or SDL also need to register to pay UIF, and employers with one or more employees are required to register with the Compensation Fund.',
+        requirements: ['worker type decision', 'legal structure', 'expected start date', 'SARS access details if available'],
+        where_to_do_this: ['SARS eFiling', 'Compensation Fund online registration', 'accountant or payroll advisor if needed'],
+        record_and_save: ['employer registration checklist', 'PAYE/UIF note', 'Compensation Fund note if applicable', 'save in the Employer Setup folder'],
+      };
+    }
     if (task.task_code === 't03_confirm_licence_requirements') {
       return {
         ...task,
@@ -719,6 +799,25 @@ function applyRegionText(task, regionCode) {
         requirements: ['customer or admin process', 'types of personal information collected', 'storage method used'],
         where_to_do_this: ['internal admin process', 'privacy note', 'advisor if needed'],
         record_and_save: ['data handling note', 'storage rule', 'save in the Compliance folder'],
+      };
+    }
+
+    if (task.task_code === 't01_confirm_worker_type') {
+      return {
+        ...task,
+        instructions: 'Decide whether the first person you bring into the business will be hired as an employee under the UAE labour route or engaged outside that route. Do not start hiring until the engagement model is clear.',
+        requirements: ['planned role', 'expected working arrangement', 'UAE operating route'],
+        where_to_do_this: ['internal hiring note', 'MOHRE guidance or free-zone guidance if needed'],
+        record_and_save: ['worker type decision', 'hiring note', 'save in the Employer Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_check_employer_registrations') {
+      return {
+        ...task,
+        instructions: 'Check which employer onboarding and labour administration steps apply before the first employee starts. In the UAE, this usually means confirming the relevant MOHRE or free-zone employment route and whether wage administration rules such as WPS apply.',
+        requirements: ['worker type decision', 'chosen setup path', 'expected start date'],
+        where_to_do_this: ['MOHRE or relevant free-zone authority', 'payroll or labour advisor if needed'],
+        record_and_save: ['employer setup checklist', 'labour route note', 'save in the Employer Setup folder'],
       };
     }
     if (task.task_code === 't03_confirm_licence_requirements') {
@@ -862,10 +961,11 @@ function applyBusinessTypeText(task, businessTypeCode) {
 }
 
 
-export function getBrImplementationBlueprint(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
+export function getBrImplementationBlueprint(input?: { businessTypeCode?: string | null; regionCode?: string | null; employerIntent?: boolean | null }) {
   const regionCode = input?.regionCode || '';
   const businessTypeCode = input?.businessTypeCode || '';
-  return COMMON_STRUCTURE.map((phase) => ({
+  const phases = withEmployerReadiness(COMMON_STRUCTURE, Boolean(input?.employerIntent));
+  return phases.map((phase) => ({
     ...phase,
     sections: phase.sections.map((section) => ({
       ...section,
@@ -877,7 +977,7 @@ export function getBrImplementationBlueprint(input?: { businessTypeCode?: string
   }));
 }
 
-export function getBrActionBlueprints(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
+export function getBrActionBlueprints(input?: { businessTypeCode?: string | null; regionCode?: string | null; employerIntent?: boolean | null }) {
   return getBrImplementationBlueprint(input).flatMap((phase) =>
     phase.sections.flatMap((section) =>
       section.actions.map((action) => ({
@@ -891,7 +991,7 @@ export function getBrActionBlueprints(input?: { businessTypeCode?: string | null
   );
 }
 
-export function buildBrTaskTemplates(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
+export function buildBrTaskTemplates(input?: { businessTypeCode?: string | null; regionCode?: string | null; employerIntent?: boolean | null }) {
   return getBrActionBlueprints(input).flatMap((action) =>
     action.tasks.map((task, index) => ({
       code: task.task_code,

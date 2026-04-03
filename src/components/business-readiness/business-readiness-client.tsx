@@ -180,6 +180,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     founderName: '',
     targetCustomer: '',
     whatYouSell: '',
+    hiringStaff: false,
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [phaseFilter, setPhaseFilter] = useState<'all' | string>('all');
@@ -228,6 +229,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
           founderName: form.founderName,
           targetCustomer: form.targetCustomer,
           whatYouSell: form.whatYouSell,
+          hiringStaff: form.hiringStaff,
         }),
       });
       const payload = await res.json();
@@ -457,6 +459,10 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
               <SmallMuted>Target customer</SmallMuted>
               <input value={form.targetCustomer} onChange={(e) => setForm((current) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
+            <label style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 24 }}>
+              <input type="checkbox" checked={Boolean(form.hiringStaff)} onChange={(e) => setForm((current) => ({ ...current, hiringStaff: e.target.checked }))} />
+              <span style={{ fontSize: 13, color: '#374151' }}>I plan to hire staff soon</span>
+            </label>
           </div>
           <div style={{ marginTop: 14 }}>
             <button onClick={initializeWorkspace} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>
@@ -483,6 +489,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
               <span style={{ fontSize: 12, color: '#6b7280' }}>{businessTypeLabel}</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>•</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>{regionLabel}</span>
+              {data?.employerIntent ? <><span style={{ fontSize: 12, color: '#6b7280' }}>•</span><span style={{ fontSize: 12, color: '#6b7280' }}>Hiring staff</span></> : null}
             </div>
             <SmallMuted style={{ marginTop: 10 }}>{profile?.business_description || 'Execution workspace for getting this business launch-ready and operating-ready.'}</SmallMuted>
           </div>

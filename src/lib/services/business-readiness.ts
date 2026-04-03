@@ -5,9 +5,9 @@ import { moduleIdFromCode } from '@/lib/constants/modules';
 import { nowIso } from '@/lib/utils/ids';
 import {
   BR_BUSINESS_TYPES,
-  BR_DOMAINS,
   BR_LAUNCH_DOMAIN_CODES,
   BR_PHASES,
+  getBrDomains,
   BR_READINESS_PERCENT,
   BR_REGIONS,
   BR_TEMPLATE_VERSION,
@@ -34,6 +34,21 @@ import {
   updateBrWorkspace,
 } from '@/lib/repositories/business-readiness';
 
+
+function parseProfileNotes(notes?: string | null) {
+  try {
+    const parsed = JSON.parse(String(notes || '{}'));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function getEmployerIntent(profile?: any) {
+  const notes = parseProfileNotes(profile?.notes);
+  return Boolean(notes?.hiring_staff);
+}
+
 function scoreFromReadiness(state?: string | null) {
   return BR_READINESS_PERCENT[String(state || 'not_started').toLowerCase()] || 0;
 }
@@ -44,8 +59,8 @@ function phaseBandFromCode(phaseCode?: string | null) {
   return { code: 'P3', name: 'Optimize, Automate, and AI-Enable' };
 }
 
-function buildTaskInstances(workspaceId: string, businessTypeCode: string, regionCode: string) {
-  return buildBrTaskTemplates({ businessTypeCode, regionCode }).map((task, index) => ({
+function buildTaskInstances(workspaceId: string, businessTypeCode: string, regionCode: string, employerIntent = false) {
+  return buildBrTaskTemplates({ businessTypeCode, regionCode, employerIntent }).map((task, index) => ({
     task_instance_id: `${workspaceId}::${task.code}`,
     workspace_id: workspaceId,
     task_code: task.code,
@@ -96,7 +111,7 @@ function deriveSectionState(tasks: any[]) {
 
 function buildActionSummaries(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
-  const blueprint = getBrActionBlueprints({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code });
+  const blueprint = getBrActionBlueprints({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code, employerIntent: getEmployerIntent(bundle.profile) });
   return blueprint.map((action, index) => {
     const actionTasks = action.tasks.map((task) => tasks.find((row) => row.task_code === task.task_code)).filter(Boolean);
     const requiredTasks = actionTasks.filter((row) => row.required_flag !== false);
@@ -146,8 +161,9 @@ function buildActionSummaries(workspace: any, bundle: any) {
 function deriveWorkspaceState(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
   const actionSummaries = buildActionSummaries(workspace, bundle);
+  const domainLibrary = getBrDomains({ employerIntent: getEmployerIntent(bundle.profile) });
 
-  const domainStates = BR_DOMAINS.map((domain, index) => {
+  const domainStates = domainLibrary.map((domain, index) => {
     const domainTasks = tasks.filter((row) => row.domain_code === domain.code);
     const derived = deriveSectionState(domainTasks);
     const domainActions = actionSummaries.filter((row) => row.section_code === domain.code);
@@ -271,7 +287,7 @@ function buildNextActionsFromActions(actions: any[]) {
 
 function buildImplementationPlan(workspace: any, bundle: any) {
   const actionMap = new Map(buildActionSummaries(workspace, bundle).map((row) => [row.action_code, row]));
-  const blueprint = getBrImplementationBlueprint({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code });
+  const blueprint = getBrImplementationBlueprint({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code, employerIntent: getEmployerIntent(bundle.profile) });
   return blueprint.map((phase) => ({
     phase_code: phase.phase_code,
     phase_name: phase.phase_name,
@@ -321,7 +337,8 @@ async function ensureCurrentTemplate(assessmentId: string) {
   const workspace = await getBrWorkspaceByAssessment(assessmentId);
   if (!workspace) return null;
   if (workspace.template_version === BR_TEMPLATE_VERSION) return workspace;
-  const taskInstances = buildTaskInstances(workspace.workspace_id, workspace.business_type_code, workspace.primary_region_code);
+  const bundle = await getBrWorkspaceBundle(workspace.workspace_id);
+  const taskInstances = buildTaskInstances(workspace.workspace_id, workspace.business_type_code, workspace.primary_region_code, getEmployerIntent(bundle.profile));
   await replaceBrTaskInstances(workspace.workspace_id, taskInstances);
   return updateBrWorkspace(workspace.workspace_id, { template_version: BR_TEMPLATE_VERSION, current_phase_code: 'phase_0_define' });
 }
@@ -348,6 +365,7 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
     workspace,
     profile: bundle.profile,
     regionProfile: bundle.regionProfile,
+    employerIntent: getEmployerIntent(bundle.profile),
     phaseStates: bundle.phases || [],
     sectionStates: bundle.domains || [],
     blockers: bundle.blockers || [],
@@ -392,9 +410,10 @@ export async function initializeBusinessReadiness(input: {
     revenueModel: input.revenueModel,
     operatingChannel: input.operatingChannel,
     whatYouSell: input.whatYouSell,
+    hiringStaff: input.hiringStaff,
   });
 
-  const taskInstances = buildTaskInstances(workspace.workspace_id, input.businessTypeCode, input.primaryRegionCode);
+  const taskInstances = buildTaskInstances(workspace.workspace_id, input.businessTypeCode, input.primaryRegionCode, Boolean(input.hiringStaff));
   await replaceBrTaskInstances(workspace.workspace_id, taskInstances);
   await updateBrWorkspace(workspace.workspace_id, { template_version: BR_TEMPLATE_VERSION });
   await persistDerivedWorkspaceState(input.assessmentId);
@@ -476,6 +495,7 @@ export async function computeAndPersistBusinessReadiness(assessmentId: string) {
     blocker_count: blockers.length,
     region_label: getBrRegionLabel(workspace.primary_region_code),
     business_type_label: getBrBusinessTypeLabel(workspace.business_type_code),
+    employer_intent: getEmployerIntent(bundle.profile),
   };
 
   const findings = blockers.map((row: any, index: number) => ({

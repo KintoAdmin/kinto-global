@@ -51,6 +51,7 @@ export async function createBrWorkspace(input: {
   revenueModel?: string | null;
   operatingChannel?: string | null;
   whatYouSell?: string | null;
+  hiringStaff?: boolean | null;
 }) {
   const supabase = getAdminClient();
   const ts = nowIso();
@@ -67,7 +68,7 @@ export async function createBrWorkspace(input: {
     overall_readiness_state: 'started',
     launch_ready_flag: false,
     active_blocker_count: 0,
-    template_version: 'br-v10-playbook-overlays',
+    template_version: 'br-v11-employer-readiness',
     created_at: ts,
     updated_at: ts,
   };
@@ -80,7 +81,7 @@ export async function createBrWorkspace(input: {
     target_customer: input.targetCustomer || '',
     revenue_model: input.revenueModel || '',
     operating_channel: input.operatingChannel || '',
-    notes: '',
+    notes: JSON.stringify({ hiring_staff: Boolean(input.hiringStaff) }),
     created_at: ts,
     updated_at: ts,
   };
