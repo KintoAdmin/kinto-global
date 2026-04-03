@@ -158,6 +158,98 @@ function buildActionSummaries(workspace: any, bundle: any) {
   });
 }
 
+
+function buildRecurringObligations(workspace: any, bundle: any) {
+  const regionCode = String(workspace?.primary_region_code || '').toLowerCase();
+  const employerIntent = getEmployerIntent(bundle.profile);
+  const launchReady = Boolean(workspace?.launch_ready_flag);
+  const items: any[] = [];
+
+  function push(code: string, title: string, cadence: string, whenToStart: string, whereToDoThis: string[], recordAndSave: string[], note: string, priority = 50) {
+    items.push({
+      code,
+      title,
+      cadence,
+      when_to_start: whenToStart,
+      where_to_do_this: whereToDoThis,
+      record_and_save: recordAndSave,
+      note,
+      status: launchReady ? 'attention_needed' : 'waiting',
+      priority,
+    });
+  }
+
+  if (regionCode === 'south_africa') {
+    push(
+      'za_annual_returns',
+      'Keep annual company returns up to date',
+      'Annual',
+      'After launch',
+      ['CIPC', 'Internal compliance calendar'],
+      ['annual return submission date', 'payment proof if applicable', 'save in the Compliance folder'],
+      'If the business is operating through a company, annual returns should be tracked and submitted on time so the business stays in good standing.',
+      80,
+    );
+    push(
+      'za_tax_admin',
+      'Track ongoing tax administration deadlines',
+      'Monthly / provisional / annual',
+      'Before launch',
+      ['SARS eFiling', 'Accountant or tax practitioner if needed'],
+      ['tax calendar', 'submission references', 'save in the Tax folder'],
+      'Once trading starts, tax administration needs a calendar and a responsible owner. Do not wait until the first deadline is close.',
+      90,
+    );
+    if (employerIntent) {
+      push(
+        'za_employer_obligations',
+        'Track employer filing and payroll obligations',
+        'Monthly / annual',
+        'Before launch',
+        ['SARS eFiling', 'UIF', 'Compensation Fund', 'Payroll provider if used'],
+        ['employer registration details', 'payroll calendar', 'save in the Employer folder'],
+        'If staff will be hired, employer registrations and filing routines should be tracked before the first employee starts.',
+        95,
+      );
+    }
+  } else if (regionCode === 'uae') {
+    push(
+      'uae_licence_renewal',
+      'Track licence renewal and authority deadlines',
+      'Annual / authority-specific',
+      'After launch',
+      ['Relevant mainland authority or free-zone authority', 'Internal compliance calendar'],
+      ['licence expiry date', 'renewal reference', 'save in the Compliance folder'],
+      'Do not let licence renewal become a last-minute issue. The authority route should already be known from setup.',
+      80,
+    );
+    push(
+      'uae_tax_admin',
+      'Track corporate tax and VAT administration',
+      'Periodic',
+      'Before launch',
+      ['Federal Tax Authority', 'EmaraTax', 'Tax advisor if needed'],
+      ['tax registration note', 'return calendar', 'save in the Tax folder'],
+      'If the business is in scope for UAE tax administration, calendar it early and keep the registration details easy to retrieve.',
+      90,
+    );
+    if (employerIntent) {
+      push(
+        'uae_employer_obligations',
+        'Track worker administration and employment obligations',
+        'Recurring',
+        'Before launch',
+        ['MOHRE or relevant free-zone authority', 'Payroll or admin provider if used'],
+        ['employment admin calendar', 'worker onboarding records', 'save in the Employer folder'],
+        'If staff will be hired, set the employment administration path before the first employee starts.',
+        95,
+      );
+    }
+  }
+
+  return items.sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0));
+}
+
 function deriveWorkspaceState(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
   const actionSummaries = buildActionSummaries(workspace, bundle);
@@ -360,6 +452,7 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
   const actionSummaries = buildActionSummaries(workspace, bundle);
   const nextActions = buildNextActionsFromActions(actionSummaries);
   const implementationPlan = buildImplementationPlan(workspace, bundle);
+  const recurringObligations = buildRecurringObligations(workspace, bundle);
   return {
     hasWorkspace: true,
     workspace,
@@ -374,6 +467,7 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
     nextActions,
     actionSummaries,
     implementationPlan,
+    recurringObligations,
     summary: buildSponsorSummary(workspace, bundle.blockers || [], nextActions),
     businessTypes: BR_BUSINESS_TYPES,
     regions: BR_REGIONS,

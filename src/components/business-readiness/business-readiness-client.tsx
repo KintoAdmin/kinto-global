@@ -339,6 +339,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   const businessTypes = data?.businessTypes || [];
   const regions = data?.regions || [];
   const evidence = data?.evidence || [];
+  const recurringObligations = data?.recurringObligations || [];
 
   const businessTypeLabel = businessTypes.find((row: any) => row.code === workspace?.business_type_code)?.label || titleCase(workspace?.business_type_code);
   const regionLabel = regions.find((row: any) => row.code === workspace?.primary_region_code)?.label || titleCase(workspace?.primary_region_code);
@@ -630,6 +631,23 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
               )) : <SmallMuted>No active launch blockers right now.</SmallMuted>}
             </div>
           </Card>
+
+          <Card>
+            <SectionTitle>Upcoming obligations</SectionTitle>
+            <SmallMuted>These are the recurring items Kinto wants you to prepare for once the business is live.</SmallMuted>
+            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+              {recurringObligations.length ? recurringObligations.slice(0, 3).map((item: any) => (
+                <div key={item.code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12, display: 'grid', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ fontWeight: 700 }}>{item.title}</div>
+                    <StatusPill label={item.status} />
+                  </div>
+                  <SmallMuted>{item.note}</SmallMuted>
+                  <div style={{ fontSize: 12, color: '#374151' }}><strong>Cadence:</strong> {item.cadence} • <strong>Start:</strong> {item.when_to_start}</div>
+                </div>
+              )) : <SmallMuted>No recurring obligations are active yet for this workspace.</SmallMuted>}
+            </div>
+          </Card>
         </div>
       ) : null}
 
@@ -776,6 +794,25 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                 )) : <SmallMuted>No later actions available right now.</SmallMuted>}
               </div>
             ) : null}
+          </Card>
+
+          <Card>
+            <SectionTitle>Recurring obligations</SectionTitle>
+            <SmallMuted>Keep these visible so launch readiness becomes operating discipline, not just setup completion.</SmallMuted>
+            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+              {recurringObligations.length ? recurringObligations.map((item: any) => (
+                <div key={item.code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12, display: 'grid', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ fontWeight: 700 }}>{item.title}</div>
+                    <StatusPill label={item.status} />
+                  </div>
+                  <SmallMuted>{item.note}</SmallMuted>
+                  <div style={{ fontSize: 12, color: '#374151' }}><strong>Cadence:</strong> {item.cadence}</div>
+                  {!!item.where_to_do_this?.length && <div style={{ fontSize: 12, color: '#374151' }}><strong>Where to do this:</strong> {item.where_to_do_this.join(' • ')}</div>}
+                  {!!item.record_and_save?.length && <div style={{ fontSize: 12, color: '#374151' }}><strong>Record and save:</strong> {item.record_and_save.join(' • ')}</div>}
+                </div>
+              )) : <SmallMuted>No recurring obligations are active yet for this workspace.</SmallMuted>}
+            </div>
           </Card>
         </div>
       ) : null}
