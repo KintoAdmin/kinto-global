@@ -252,7 +252,7 @@ function TaskRow({
   );
 }
 
-function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument, openDocumentsForTask }: any) {
+function ActionCard({ action, current, collapsed, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument, openDocumentsForTask }: any) {
   return (
     <div style={{ background:'#fff', border:`1px solid ${current ? '#99f6e4' : '#e5e7eb'}`, borderLeft:`3px solid ${current ? '#14b8a6' : '#cbd5e1'}`, borderRadius:16, overflow:'hidden' }}>
       <div style={{ padding: 16 }}>
@@ -283,7 +283,7 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
           <SmallMuted>{action.next_task_name ? `Start with: ${action.next_task_name}` : 'All tasks complete.'}</SmallMuted>
         </div>
       </div>
-      {current ? (
+      {current && !collapsed ? (
         <div style={{ borderTop: '1px solid #e5e7eb', background: '#fff' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -358,6 +358,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   const [selectedPhaseCode, setSelectedPhaseCode] = useState<string>('phase_0_define');
   const [docDraft, setDocDraft] = useState({ name: '', link: '' });
   const [showDocComposerForTask, setShowDocComposerForTask] = useState<string | null>(null);
+  const [collapsedActionCodes, setCollapsedActionCodes] = useState<string[]>([]);
   const [documentSearch, setDocumentSearch] = useState('');
   const [documentPhaseFilter, setDocumentPhaseFilter] = useState<'all' | string>('all');
   const [documentTypeFilter, setDocumentTypeFilter] = useState<'all' | string>('all');
@@ -557,18 +558,26 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     return phaseActions.find((row: any) => row.action_code === openAction) || phaseActions.find((row: any) => row.status !== 'complete') || phaseActions[0];
   }, [phaseActions, openAction]);
 
+  const isActionCollapsed = (actionCode?: string | null) => !!actionCode && collapsedActionCodes.includes(actionCode);
+
+  const toggleActionCollapse = (actionCode?: string | null) => {
+    if (!actionCode) return;
+    setCollapsedActionCodes((prev: string[]) => prev.includes(actionCode) ? prev.filter((code: string) => code !== actionCode) : [...prev, actionCode]);
+  };
+
   useEffect(() => {
     if (currentAction?.action_code) setOpenAction(currentAction.action_code);
   }, [currentAction?.action_code]);
 
   useEffect(() => {
-    if (!currentAction?.tasks?.length) {
-      setExpandedTaskId(null);
-      return;
+    if (!currentAction?.tasks?.length) return;
+    if (isActionCollapsed(currentAction.action_code)) return;
+    const taskIds = new Set(currentAction.tasks.map((task: any) => task.task_instance_id));
+    if (!expandedTaskId || !taskIds.has(expandedTaskId)) {
+      const firstOpenTask = currentAction.tasks.find((task: any) => task.status !== 'done') || currentAction.tasks[0];
+      if (firstOpenTask?.task_instance_id) setExpandedTaskId(firstOpenTask.task_instance_id);
     }
-    const firstOpenTask = currentAction.tasks.find((task: any) => task.status !== 'done') || currentAction.tasks[0];
-    setExpandedTaskId(firstOpenTask?.task_instance_id || null);
-  }, [currentAction?.action_code]);
+  }, [currentAction?.action_code, currentAction?.tasks, expandedTaskId, collapsedActionCodes]);
 
   const docsByTask = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -823,11 +832,13 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                   </div>
                   <StatusPill label={currentAction.status} />
                 </div>
-                <button type='button' onClick={() => setOpenAction(openAction ? null : currentAction.action_code)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontWeight:700, marginBottom:'0.6rem' }}>▲ Collapse</button>
+                <button type='button' onClick={() => toggleActionCollapse(currentAction.action_code)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontWeight:700, marginBottom:'0.6rem' }}>{isActionCollapsed(currentAction.action_code) ? '▼ Expand' : '▲ Collapse'}</button>
               </div>
+              {!isActionCollapsed(currentAction.action_code) ? (
               <div style={{ borderTop:'1px solid #e5e7eb', padding:'0 1rem' }}>
                 <PhaseStrip phases={phaseSummaries} selectedPhaseCode={selectedPhaseCode} onSelect={(code:any) => { setSelectedPhaseCode(code); setOpenAction(null); }} />
               </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -845,10 +856,11 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                     key={action.action_code}
                     action={{ ...action, phase_code: phaseView?.phase_code, phase_name: phaseView?.phase_name, section_code: section.section_code, section_name: section.section_name }}
                     current={currentAction?.action_code === action.action_code}
+                    collapsed={isActionCollapsed(action.action_code)}
                     docsByTask={docsByTask}
                     expandedTaskId={expandedTaskId}
                     setExpandedTaskId={setExpandedTaskId}
-                    onOpen={() => setOpenAction(currentAction?.action_code === action.action_code ? null : action.action_code)}
+                    onOpen={() => currentAction?.action_code === action.action_code ? toggleActionCollapse(action.action_code) : setOpenAction(action.action_code)}
                     onStatusChange={(taskInstanceId: string, status: string) => updateTask(taskInstanceId, status)}
                     saving={saving}
                     previewMode={previewMode}
