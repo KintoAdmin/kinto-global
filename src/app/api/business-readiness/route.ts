@@ -14,7 +14,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const assessmentId = await resolveAssessmentId(searchParams.get('assessmentId'));
-    const payload = await getBusinessReadinessPayload(assessmentId);
+    const payload = await getBusinessReadinessPayload(assessmentId, {
+      businessTypeCode: searchParams.get('previewBusinessTypeCode'),
+      regionCode: searchParams.get('previewRegionCode'),
+      employerIntent: searchParams.get('previewEmployerIntent') ? searchParams.get('previewEmployerIntent') === 'true' : undefined,
+    });
     return jsonOk(payload);
   } catch (error) {
     return jsonError(error);

@@ -158,98 +158,6 @@ function buildActionSummaries(workspace: any, bundle: any) {
   });
 }
 
-
-function buildRecurringObligations(workspace: any, bundle: any) {
-  const regionCode = String(workspace?.primary_region_code || '').toLowerCase();
-  const employerIntent = getEmployerIntent(bundle.profile);
-  const launchReady = Boolean(workspace?.launch_ready_flag);
-  const items: any[] = [];
-
-  function push(code: string, title: string, cadence: string, whenToStart: string, whereToDoThis: string[], recordAndSave: string[], note: string, priority = 50) {
-    items.push({
-      code,
-      title,
-      cadence,
-      when_to_start: whenToStart,
-      where_to_do_this: whereToDoThis,
-      record_and_save: recordAndSave,
-      note,
-      status: launchReady ? 'attention_needed' : 'waiting',
-      priority,
-    });
-  }
-
-  if (regionCode === 'south_africa') {
-    push(
-      'za_annual_returns',
-      'Keep annual company returns up to date',
-      'Annual',
-      'After launch',
-      ['CIPC', 'Internal compliance calendar'],
-      ['annual return submission date', 'payment proof if applicable', 'save in the Compliance folder'],
-      'If the business is operating through a company, annual returns should be tracked and submitted on time so the business stays in good standing.',
-      80,
-    );
-    push(
-      'za_tax_admin',
-      'Track ongoing tax administration deadlines',
-      'Monthly / provisional / annual',
-      'Before launch',
-      ['SARS eFiling', 'Accountant or tax practitioner if needed'],
-      ['tax calendar', 'submission references', 'save in the Tax folder'],
-      'Once trading starts, tax administration needs a calendar and a responsible owner. Do not wait until the first deadline is close.',
-      90,
-    );
-    if (employerIntent) {
-      push(
-        'za_employer_obligations',
-        'Track employer filing and payroll obligations',
-        'Monthly / annual',
-        'Before launch',
-        ['SARS eFiling', 'UIF', 'Compensation Fund', 'Payroll provider if used'],
-        ['employer registration details', 'payroll calendar', 'save in the Employer folder'],
-        'If staff will be hired, employer registrations and filing routines should be tracked before the first employee starts.',
-        95,
-      );
-    }
-  } else if (regionCode === 'uae') {
-    push(
-      'uae_licence_renewal',
-      'Track licence renewal and authority deadlines',
-      'Annual / authority-specific',
-      'After launch',
-      ['Relevant mainland authority or free-zone authority', 'Internal compliance calendar'],
-      ['licence expiry date', 'renewal reference', 'save in the Compliance folder'],
-      'Do not let licence renewal become a last-minute issue. The authority route should already be known from setup.',
-      80,
-    );
-    push(
-      'uae_tax_admin',
-      'Track corporate tax and VAT administration',
-      'Periodic',
-      'Before launch',
-      ['Federal Tax Authority', 'EmaraTax', 'Tax advisor if needed'],
-      ['tax registration note', 'return calendar', 'save in the Tax folder'],
-      'If the business is in scope for UAE tax administration, calendar it early and keep the registration details easy to retrieve.',
-      90,
-    );
-    if (employerIntent) {
-      push(
-        'uae_employer_obligations',
-        'Track worker administration and employment obligations',
-        'Recurring',
-        'Before launch',
-        ['MOHRE or relevant free-zone authority', 'Payroll or admin provider if used'],
-        ['employment admin calendar', 'worker onboarding records', 'save in the Employer folder'],
-        'If staff will be hired, set the employment administration path before the first employee starts.',
-        95,
-      );
-    }
-  }
-
-  return items.sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0));
-}
-
 function deriveWorkspaceState(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
   const actionSummaries = buildActionSummaries(workspace, bundle);
@@ -377,9 +285,9 @@ function buildNextActionsFromActions(actions: any[]) {
     }));
 }
 
-function buildImplementationPlan(workspace: any, bundle: any) {
-  const actionMap = new Map(buildActionSummaries(workspace, bundle).map((row) => [row.action_code, row]));
-  const blueprint = getBrImplementationBlueprint({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code, employerIntent: getEmployerIntent(bundle.profile) });
+function buildImplementationPlanForInput(input: { businessTypeCode?: string | null; regionCode?: string | null; employerIntent?: boolean | null }, bundle?: any) {
+  const taskMap = new Map((bundle?.tasks || []).map((row: any) => [row.task_code, row]));
+  const blueprint = getBrImplementationBlueprint({ businessTypeCode: input.businessTypeCode, regionCode: input.regionCode, employerIntent: input.employerIntent });
   return blueprint.map((phase) => ({
     phase_code: phase.phase_code,
     phase_name: phase.phase_name,
@@ -387,21 +295,63 @@ function buildImplementationPlan(workspace: any, bundle: any) {
       section_code: section.section_code,
       section_name: section.section_name,
       actions: section.actions.map((action) => {
-        const summary = actionMap.get(action.action_code);
+        const tasks = action.tasks.map((task, taskIndex) => {
+          const taskRow = taskMap.get(task.task_code) || null;
+          return {
+            task_code: task.task_code,
+            task_title: task.task_title,
+            instructions: task.instructions,
+            requirements: task.requirements || [],
+            where_to_do_this: task.where_to_do_this || [],
+            record_and_save: task.record_and_save || [],
+            optional: Boolean(task.optional),
+            status: taskRow?.status || 'not_started',
+            task_instance_id: taskRow?.task_instance_id || `preview::${task.task_code}`,
+            sort_order: taskIndex + 1,
+          };
+        });
+        const requiredTasks = tasks.filter((row: any) => !row.optional);
+        const totalTasks = requiredTasks.length;
+        const completedTasks = requiredTasks.filter((row: any) => row.status === 'done').length;
+        const started = requiredTasks.some((row: any) => ['in_progress', 'done'].includes(String(row.status || '')));
+        let status = 'not_started';
+        if (completedTasks === totalTasks && totalTasks > 0) status = 'complete';
+        else if (started) status = 'in_progress';
+        const nextTask = requiredTasks.find((row: any) => row.status !== 'done') || null;
         return {
           action_code: action.action_code,
           action_title: action.action_title,
           objective: action.objective,
           launch_critical: Boolean(action.launch_critical),
-          status: summary?.status || 'not_started',
-          completed_tasks: summary?.completed_tasks || 0,
-          total_tasks: summary?.total_tasks || action.tasks.length,
-          progress_pct: summary?.progress_pct || 0,
-          tasks: summary?.tasks || [],
+          status,
+          completed_tasks: completedTasks,
+          total_tasks: totalTasks,
+          progress_pct: totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0,
+          next_task_code: nextTask?.task_code || '',
+          next_task_name: nextTask?.task_title || '',
+          tasks,
         };
       }),
     })),
   }));
+}
+
+function buildImplementationPlan(workspace: any, bundle: any) {
+  return buildImplementationPlanForInput({
+    businessTypeCode: workspace.business_type_code,
+    regionCode: workspace.primary_region_code,
+    employerIntent: getEmployerIntent(bundle.profile),
+  }, bundle);
+}
+
+function flattenImplementationActions(plan: any[]) {
+  return (plan || []).flatMap((phase: any) => (phase.sections || []).flatMap((section: any) => (section.actions || []).map((action: any) => ({
+    ...action,
+    phase_code: phase.phase_code,
+    phase_name: phase.phase_name,
+    section_code: section.section_code,
+    section_name: section.section_name,
+  }))));
 }
 
 function buildSponsorSummary(workspace: any, blockers: any[], nextActions: any[]) {
@@ -435,7 +385,7 @@ async function ensureCurrentTemplate(assessmentId: string) {
   return updateBrWorkspace(workspace.workspace_id, { template_version: BR_TEMPLATE_VERSION, current_phase_code: 'phase_0_define' });
 }
 
-export async function getBusinessReadinessPayload(assessmentId: string) {
+export async function getBusinessReadinessPayload(assessmentId: string, preview?: { businessTypeCode?: string | null; regionCode?: string | null; employerIntent?: boolean | null }) {
   await ensureAssessmentModules(assessmentId);
   await ensureCurrentTemplate(assessmentId);
   let workspace = await getBrWorkspaceByAssessment(assessmentId);
@@ -452,7 +402,17 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
   const actionSummaries = buildActionSummaries(workspace, bundle);
   const nextActions = buildNextActionsFromActions(actionSummaries);
   const implementationPlan = buildImplementationPlan(workspace, bundle);
-  const recurringObligations = buildRecurringObligations(workspace, bundle);
+
+  const effectivePreview = {
+    businessTypeCode: preview?.businessTypeCode || workspace.business_type_code,
+    regionCode: preview?.regionCode || workspace.primary_region_code,
+    employerIntent: typeof preview?.employerIntent === 'boolean' ? preview.employerIntent : getEmployerIntent(bundle.profile),
+  };
+  const previewMode = effectivePreview.businessTypeCode !== workspace.business_type_code || effectivePreview.regionCode !== workspace.primary_region_code || effectivePreview.employerIntent !== getEmployerIntent(bundle.profile);
+  const previewImplementationPlan = buildImplementationPlanForInput(effectivePreview, bundle);
+  const previewActionSummaries = flattenImplementationActions(previewImplementationPlan);
+  const previewNextActions = buildNextActionsFromActions(previewActionSummaries);
+
   return {
     hasWorkspace: true,
     workspace,
@@ -467,10 +427,18 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
     nextActions,
     actionSummaries,
     implementationPlan,
-    recurringObligations,
     summary: buildSponsorSummary(workspace, bundle.blockers || [], nextActions),
     businessTypes: BR_BUSINESS_TYPES,
     regions: BR_REGIONS,
+    previewMode,
+    preview: {
+      businessTypeCode: effectivePreview.businessTypeCode,
+      regionCode: effectivePreview.regionCode,
+      employerIntent: effectivePreview.employerIntent,
+    },
+    previewImplementationPlan,
+    previewActionSummaries,
+    previewNextActions,
   };
 }
 

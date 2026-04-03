@@ -12,42 +12,23 @@ function sentenceCase(value?: string | null) {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
-function titleCase(value?: string | null) {
-  return String(value || '')
-    .replaceAll('_', ' ')
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function badgeTone(status?: string | null) {
+function statusTone(status?: string | null) {
   const raw = String(status || '').toLowerCase();
   if (['complete', 'done', 'ready', 'set_up'].includes(raw)) return { bg: '#dcfce7', color: '#166534', border: '#bbf7d0' };
   if (['in_progress', 'started', 'current'].includes(raw)) return { bg: '#ecfeff', color: '#0f766e', border: '#99f6e4' };
   if (['blocked', 'critical', 'overdue'].includes(raw)) return { bg: '#fee2e2', color: '#b91c1c', border: '#fecaca' };
-  if (['locked', 'later', 'waiting'].includes(raw)) return { bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb' };
+  if (['planned', 'later', 'waiting'].includes(raw)) return { bg: '#fef3c7', color: '#92400e', border: '#fde68a' };
   return { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
 }
 
+function Card({ children, style }: any) {
+  return <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderLeft: '3px solid #14b8a6', borderRadius: 16, padding: 16, ...style }}>{children}</div>;
+}
+
 function StatusPill({ label }: { label: string }) {
-  const tone = badgeTone(label);
+  const tone = statusTone(label);
   return (
-    <span
-      style={{
-        background: tone.bg,
-        color: tone.color,
-        border: `1px solid ${tone.border}`,
-        borderRadius: 999,
-        padding: '4px 10px',
-        fontSize: 12,
-        fontWeight: 700,
-        lineHeight: 1,
-        display: 'inline-flex',
-        alignItems: 'center',
-        whiteSpace: 'nowrap',
-      }}
-    >
+    <span style={{ background: tone.bg, color: tone.color, border: `1px solid ${tone.border}`, borderRadius: 999, padding: '5px 10px', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
       {sentenceCase(label)}
     </span>
   );
@@ -57,124 +38,213 @@ function SmallMuted({ children, style }: any) {
   return <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.45, ...style }}>{children}</div>;
 }
 
-function Card({ children, style }: any) {
-  return <div style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 16, background: '#fff', ...style }}>{children}</div>;
-}
-
-function SectionTitle({ children }: any) {
-  return <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{children}</h3>;
+function GroupLabel({ children }: any) {
+  return <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3, color: '#6b7280' }}>{children}</div>;
 }
 
 function ProgressBar({ percent }: { percent: number }) {
   const fill = Math.max(0, Math.min(100, Number(percent || 0)));
-  const color = fill >= 100 ? '#16a34a' : fill >= 50 ? '#14b8a6' : fill > 0 ? '#f59e0b' : '#d1d5db';
+  const color = fill >= 100 ? '#16a34a' : fill >= 40 ? '#14b8a6' : fill > 0 ? '#f59e0b' : '#d1d5db';
   return (
-    <div style={{ width: '100%', height: 8, background: '#f3f4f6', borderRadius: 999, overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: 9, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden' }}>
       <div style={{ width: `${fill}%`, height: '100%', background: color, transition: 'width 0.2s ease' }} />
     </div>
   );
-}
-
-function phaseLabel(code?: string | null, phaseStates?: any[]) {
-  const row = (phaseStates || []).find((item: any) => item.phase_code === code);
-  return row?.phase_name || '—';
 }
 
 function buildDocumentLabel(doc: any) {
   return doc?.note_text || doc?.file_url || doc?.external_link || 'Saved document';
 }
 
-function GroupLabel({ children }: any) {
-  return <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3, color: '#6b7280' }}>{children}</div>;
+function linkedDocsForTask(docsByTask: Map<string, any[]>, taskId?: string | null) {
+  return docsByTask.get(taskId || '') || [];
 }
 
-function TaskBlock({ task, linkedDocs, saving, onStart, onComplete, showComposer, setShowComposer, docDraft, setDocDraft, onSaveDoc }: any) {
+function TaskRow({
+  task,
+  docs,
+  expanded,
+  onToggle,
+  onStart,
+  onComplete,
+  saving,
+  previewMode,
+  composerOpen,
+  onComposerToggle,
+  docDraft,
+  setDocDraft,
+  onSaveDoc,
+}: any) {
   return (
-    <Card style={{ padding: 14, background: task.status === 'done' ? '#fbfffc' : '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ fontWeight: 700 }}>{task.task_title}</div>
-            {task.optional ? <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>Optional</span> : null}
-          </div>
-          <div style={{ marginTop: 8, display: 'grid', gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Instructions</div>
-              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#374151' }}>{task.instructions}</div>
+    <>
+      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+        <td style={{ padding: '10px 12px', fontWeight: 600, width: '42%' }}>{task.task_title}</td>
+        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{task.optional ? 'Optional' : 'Required'}</td>
+        <td style={{ padding: '10px 12px' }}><StatusPill label={task.status} /></td>
+        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{docs.length} file{docs.length === 1 ? '' : 's'}</td>
+        <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+          <button onClick={onToggle} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer' }}>{expanded ? 'Hide' : 'Open'}</button>
+        </td>
+      </tr>
+      {expanded ? (
+        <tr style={{ background: '#f8fafc' }}>
+          <td colSpan={5} style={{ padding: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: 14 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Instructions</div>
+                <div style={{ fontSize: 13, lineHeight: 1.55, color: '#374151' }}>{task.instructions}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Requirements</div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.5, color: '#374151' }}>
+                  {(task.requirements || []).map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Where to do this</div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.5, color: '#374151' }}>
+                  {(task.where_to_do_this || []).map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Record and save</div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.5, color: '#374151' }}>
+                  {(task.record_and_save || []).map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
             </div>
-            {!!task.requirements?.length && (
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Requirements</div>
-                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                  {task.requirements.map((item: string) => <li key={item}>{item}</li>)}
-                </ul>
+            <div style={{ marginTop: 16, borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>Files for this task</div>
+                <button onClick={onComposerToggle} disabled={previewMode} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12, opacity: previewMode ? 0.55 : 1 }}>
+                  {composerOpen ? 'Cancel' : 'Add file or link'}
+                </button>
               </div>
-            )}
-            {!!task.where_to_do_this?.length && (
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Where to do this</div>
-                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                  {task.where_to_do_this.map((item: string) => <li key={item}>{item}</li>)}
-                </ul>
-              </div>
-            )}
-            {!!task.record_and_save?.length && (
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Record and save</div>
-                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                  {task.record_and_save.map((item: string) => <li key={item}>{item}</li>)}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-        <div style={{ display: 'grid', gap: 8, minWidth: 180, justifyItems: 'end' }}>
-          <StatusPill label={task.status} />
-          <button onClick={onStart} disabled={saving || task.status === 'done'} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, width: '100%' }}>Mark started</button>
-          <button onClick={onComplete} disabled={saving} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600, width: '100%' }}>Mark complete</button>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 14, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 12, fontWeight: 700 }}>Files</div>
-          <button onClick={() => setShowComposer(showComposer ? null : task.task_instance_id)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12 }}>
-            {showComposer ? 'Cancel' : 'Add file or link'}
-          </button>
-        </div>
-        {linkedDocs.length ? (
-          <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
-            {linkedDocs.map((doc: any) => (
-              <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+              {previewMode ? <SmallMuted style={{ marginTop: 6 }}>Preview mode is on. Switch back to the workspace region and business type to update task status or save files.</SmallMuted> : null}
+              {docs.length ? (
+                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                  {docs.map((doc: any) => (
+                    <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+                      </div>
+                      {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
+                    </div>
+                  ))}
                 </div>
-                {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
-              </div>
-            ))}
+              ) : <SmallMuted style={{ marginTop: 8 }}>No files linked yet.</SmallMuted>}
+              {composerOpen && !previewMode ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
+                  <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                  <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                  <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
+                </div>
+              ) : null}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={onStart} disabled={saving || previewMode || task.status === 'done'} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, opacity: previewMode ? 0.55 : 1 }}>Mark started</button>
+              <button onClick={onComplete} disabled={saving || previewMode} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600, opacity: previewMode ? 0.55 : 1 }}>Mark complete</button>
+            </div>
+          </td>
+        </tr>
+      ) : null}
+    </>
+  );
+}
+
+function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStartTask, onCompleteTask, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument }: any) {
+  return (
+    <Card style={{ borderLeftColor: current ? '#1ABCB0' : '#d1d5db', padding: 0, overflow: 'hidden' }}>
+      <div style={{ padding: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 18, fontWeight: 700 }}>{action.action_title}</div>
+              {action.launch_critical ? <StatusPill label="critical" /> : null}
+              {current ? <StatusPill label="current" /> : null}
+            </div>
+            <SmallMuted style={{ marginTop: 6 }}>{action.objective}</SmallMuted>
           </div>
-        ) : <SmallMuted style={{ marginTop: 8 }}>No files linked to this task yet.</SmallMuted>}
-        {showComposer ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
-            <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-            <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-            <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
+          <div style={{ display: 'grid', justifyItems: 'end', gap: 8, minWidth: 180 }}>
+            <StatusPill label={action.status} />
+            <div style={{ fontSize: 12, color: '#6b7280' }}>{action.completed_tasks}/{action.total_tasks} tasks complete</div>
+            <button onClick={onOpen} style={{ border: '1px solid #d1d5db', background: '#fff', borderRadius: 8, padding: '8px 12px', fontWeight: 700 }}>{current ? 'Hide action' : 'Open action'}</button>
           </div>
-        ) : null}
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <ProgressBar percent={action.progress_pct} />
+        </div>
       </div>
+      {current ? (
+        <div style={{ borderTop: '1px solid #e5e7eb', background: '#fff' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Definition of done</div>
+            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6, fontSize: 13, color: '#374151' }}>
+              {(action.tasks || []).filter((task: any) => !task.optional).map((task: any) => <li key={task.task_code}>{task.task_title}</li>)}
+            </ul>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Task</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Type</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Status</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Files</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280', textAlign: 'right' }}>Open</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(action.tasks || []).map((task: any) => {
+                const docs = linkedDocsForTask(docsByTask, task.task_instance_id);
+                const expanded = expandedTaskId === task.task_instance_id;
+                const composerOpen = showDocComposerForTask === task.task_instance_id;
+                return (
+                  <TaskRow
+                    key={task.task_code}
+                    task={task}
+                    docs={docs}
+                    expanded={expanded}
+                    onToggle={() => setExpandedTaskId(expanded ? null : task.task_instance_id)}
+                    onStart={() => onStartTask(task.task_instance_id)}
+                    onComplete={() => onCompleteTask(task.task_instance_id)}
+                    saving={saving}
+                    previewMode={previewMode}
+                    composerOpen={composerOpen}
+                    onComposerToggle={() => setShowDocComposerForTask(composerOpen ? null : task.task_instance_id)}
+                    docDraft={docDraft}
+                    setDocDraft={setDocDraft}
+                    onSaveDoc={() => addTaskDocument(task.task_instance_id)}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </Card>
   );
 }
 
 export function BusinessReadinessClient({ assessmentId, initialData, view = 'overview' }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const activeView = view === 'roadmap' ? 'execution' : view;
+
   const [data, setData] = useState<any>(initialData || null);
   const [loading, setLoading] = useState(!initialData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openAction, setOpenAction] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [selectedPhaseCode, setSelectedPhaseCode] = useState<string>('phase_0_define');
+  const [docDraft, setDocDraft] = useState({ name: '', link: '' });
+  const [showDocComposerForTask, setShowDocComposerForTask] = useState<string | null>(null);
+  const [documentSearch, setDocumentSearch] = useState('');
+  const [documentPhaseFilter, setDocumentPhaseFilter] = useState<'all' | string>('all');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<'all' | string>('all');
+  const [initForm, setInitForm] = useState({
     businessTypeCode: 'professional_services',
     primaryRegionCode: 'south_africa',
     businessName: '',
@@ -183,27 +253,21 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     whatYouSell: '',
     hiringStaff: false,
   });
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [phaseFilter, setPhaseFilter] = useState<'all' | string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
-  const [launchCriticalOnly, setLaunchCriticalOnly] = useState(false);
-  const [search, setSearch] = useState('');
-  const [showLater, setShowLater] = useState(false);
-  const [showDocComposerForTask, setShowDocComposerForTask] = useState<string | null>(null);
-  const [docDraft, setDocDraft] = useState({ name: '', link: '' });
-  const [documentSearch, setDocumentSearch] = useState('');
-  const [documentPhaseFilter, setDocumentPhaseFilter] = useState<'all' | string>('all');
-  const [documentTypeFilter, setDocumentTypeFilter] = useState<'all' | string>('all');
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [previewBusinessTypeCode, setPreviewBusinessTypeCode] = useState<string>('professional_services');
+  const [previewRegionCode, setPreviewRegionCode] = useState<string>('south_africa');
+  const [previewEmployerIntent, setPreviewEmployerIntent] = useState<boolean>(false);
 
-  async function load() {
+  async function load(preview?: any) {
     if (!assessmentId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/business-readiness?assessmentId=${encodeURIComponent(assessmentId)}`, { cache: 'no-store' });
+      const params = new URLSearchParams();
+      params.set('assessmentId', assessmentId);
+      if (preview?.businessTypeCode) params.set('previewBusinessTypeCode', preview.businessTypeCode);
+      if (preview?.regionCode) params.set('previewRegionCode', preview.regionCode);
+      if (typeof preview?.employerIntent === 'boolean') params.set('previewEmployerIntent', String(preview.employerIntent));
+      const res = await fetch(`/api/business-readiness?${params.toString()}`, { cache: 'no-store' });
       const payload = await res.json();
       if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to load Business Readiness.');
       setData(payload.data || payload);
@@ -218,6 +282,27 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     if (!initialData && assessmentId) load();
   }, [assessmentId]);
 
+  const workspace = data?.workspace || null;
+  const profile = data?.profile || null;
+  const businessTypes = data?.businessTypes || [];
+  const regions = data?.regions || [];
+  const evidence = data?.evidence || [];
+  const blockers = data?.blockers || [];
+
+  useEffect(() => {
+    if (!workspace) return;
+    setPreviewBusinessTypeCode((current) => current || data?.preview?.businessTypeCode || workspace.business_type_code);
+    setPreviewRegionCode((current) => current || data?.preview?.regionCode || workspace.primary_region_code);
+    setPreviewEmployerIntent(typeof data?.preview?.employerIntent === 'boolean' ? data.preview.employerIntent : Boolean(data?.employerIntent));
+  }, [workspace?.workspace_id]);
+
+  useEffect(() => {
+    if (!workspace || !assessmentId) return;
+    const currentPreview = data?.preview || {};
+    if (currentPreview.businessTypeCode === previewBusinessTypeCode && currentPreview.regionCode === previewRegionCode && Boolean(currentPreview.employerIntent) === Boolean(previewEmployerIntent)) return;
+    load({ businessTypeCode: previewBusinessTypeCode, regionCode: previewRegionCode, employerIntent: previewEmployerIntent });
+  }, [previewBusinessTypeCode, previewRegionCode, previewEmployerIntent]);
+
   async function initializeWorkspace() {
     if (!assessmentId) return;
     setSaving(true);
@@ -226,17 +311,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       const res = await fetch('/api/business-readiness', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'initialize',
-          assessmentId,
-          businessTypeCode: form.businessTypeCode,
-          primaryRegionCode: form.primaryRegionCode,
-          businessName: form.businessName,
-          founderName: form.founderName,
-          targetCustomer: form.targetCustomer,
-          whatYouSell: form.whatYouSell,
-          hiringStaff: form.hiringStaff,
-        }),
+        body: JSON.stringify({ action: 'initialize', assessmentId, ...initForm }),
       });
       const payload = await res.json();
       if (!res.ok || payload.ok === false) throw new Error(payload.error || 'Failed to initialize Business Readiness.');
@@ -316,152 +391,110 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     }
   }
 
-  function pushView(viewName: string, actionCode?: string | null) {
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    params.set('view', viewName);
-    if (assessmentId) params.set('assessmentId', assessmentId);
-    if (actionCode) params.set('action', actionCode); else params.delete('action');
-    router.push(`${pathname}?${params.toString()}`);
-  }
+  const plan = data?.previewImplementationPlan || data?.implementationPlan || [];
+  const previewMode = Boolean(data?.previewMode);
+  const nextActions = data?.previewNextActions || data?.nextActions || [];
+  const businessTypeLabel = businessTypes.find((row: any) => row.code === (data?.preview?.businessTypeCode || workspace?.business_type_code))?.label || sentenceCase(workspace?.business_type_code);
+  const regionLabel = regions.find((row: any) => row.code === (data?.preview?.regionCode || workspace?.primary_region_code))?.label || sentenceCase(workspace?.primary_region_code);
 
-  function openActionInExecution(actionCode?: string | null) {
-    if (!actionCode) return;
-    setOpenAction(actionCode);
-    pushView('execution', actionCode);
-  }
+  const phaseSummaries = useMemo(() => (plan || []).map((phase: any) => {
+    const actions = (phase.sections || []).flatMap((section: any) => section.actions || []);
+    const totalActions = actions.length;
+    const completedActions = actions.filter((row: any) => row.status === 'complete').length;
+    const totalTasks = actions.reduce((sum: number, row: any) => sum + Number(row.total_tasks || 0), 0);
+    const completedTasks = actions.reduce((sum: number, row: any) => sum + Number(row.completed_tasks || 0), 0);
+    const progressPct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const current = workspace?.current_phase_code === phase.phase_code;
+    return { ...phase, totalActions, completedActions, totalTasks, completedTasks, progressPct, current };
+  }), [plan, workspace?.current_phase_code]);
 
-  const workspace = data?.workspace || null;
-  const profile = data?.profile || null;
-  const phaseStates = data?.phaseStates || [];
-  const blockers = data?.blockers || [];
-  const nextActions = data?.nextActions || [];
-  const implementationPlan = data?.implementationPlan || [];
-  const businessTypes = data?.businessTypes || [];
-  const regions = data?.regions || [];
-  const evidence = data?.evidence || [];
-  const recurringObligations = data?.recurringObligations || [];
+  useEffect(() => {
+    if (!phaseSummaries.length) return;
+    if (!selectedPhaseCode || !phaseSummaries.some((row: any) => row.phase_code === selectedPhaseCode)) {
+      setSelectedPhaseCode(workspace?.current_phase_code || phaseSummaries[0].phase_code);
+    }
+  }, [phaseSummaries, workspace?.current_phase_code]);
 
-  const businessTypeLabel = businessTypes.find((row: any) => row.code === workspace?.business_type_code)?.label || titleCase(workspace?.business_type_code);
-  const regionLabel = regions.find((row: any) => row.code === workspace?.primary_region_code)?.label || titleCase(workspace?.primary_region_code);
-  const currentPhaseName = phaseLabel(workspace?.current_phase_code, phaseStates);
+  const phaseView = phaseSummaries.find((row: any) => row.phase_code === selectedPhaseCode) || phaseSummaries[0] || null;
+  const phaseSections = phaseView?.sections || [];
 
-  const flatActions = useMemo(() => implementationPlan.flatMap((phase: any) => phase.sections.flatMap((section: any) => section.actions.map((action: any) => ({
+  const phaseActions = useMemo(() => (phaseSections || []).flatMap((section: any) => (section.actions || []).map((action: any) => ({
     ...action,
-    phase_code: phase.phase_code,
-    phase_name: phase.phase_name,
     section_code: section.section_code,
     section_name: section.section_name,
-  })))), [implementationPlan]);
+    phase_code: phaseView?.phase_code,
+    phase_name: phaseView?.phase_name,
+  }))), [phaseSections, phaseView]);
 
-  const taskContextByInstance = useMemo(() => {
-    const map = new Map();
-    flatActions.forEach((action: any) => {
-      (action.tasks || []).forEach((task: any) => {
-        map.set(task.task_instance_id, {
-          task,
-          action,
-          phase_code: action.phase_code,
-          phase_name: action.phase_name,
-          section_code: action.section_code,
-          section_name: action.section_name,
-        });
-      });
-    });
-    return map;
-  }, [flatActions]);
+  const currentAction = useMemo(() => {
+    if (!phaseActions.length) return null;
+    return phaseActions.find((row: any) => row.action_code === openAction) || phaseActions.find((row: any) => row.status !== 'complete') || phaseActions[0];
+  }, [phaseActions, openAction]);
+
+  useEffect(() => {
+    if (currentAction?.action_code) setOpenAction(currentAction.action_code);
+  }, [currentAction?.action_code]);
 
   const docsByTask = useMemo(() => {
     const map = new Map<string, any[]>();
     (evidence || []).forEach((doc: any) => {
-      const taskId = doc.task_instance_id;
-      if (!map.has(taskId)) map.set(taskId, []);
-      map.get(taskId)!.push(doc);
+      if (!map.has(doc.task_instance_id)) map.set(doc.task_instance_id, []);
+      map.get(doc.task_instance_id)!.push(doc);
     });
     return map;
   }, [evidence]);
 
-  const suggestedActionCode = nextActions?.[0]?.action_code || flatActions.find((row: any) => row.status !== 'complete')?.action_code || flatActions[0]?.action_code || null;
-  useEffect(() => {
-    if (!openAction && suggestedActionCode) setOpenAction(suggestedActionCode);
-  }, [suggestedActionCode]);
-
-  useEffect(() => {
-    const actionFromQuery = searchParams?.get('action');
-    if (actionFromQuery) setOpenAction(actionFromQuery);
-  }, [searchParams]);
-
-  const currentActionCode = openAction || suggestedActionCode;
-  const currentAction = flatActions.find((row: any) => row.action_code === currentActionCode) || null;
-
-  const filteredActions = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return flatActions.filter((action: any) => {
-      if (phaseFilter !== 'all' && action.phase_code !== phaseFilter) return false;
-      if (statusFilter !== 'all' && action.status !== statusFilter) return false;
-      if (launchCriticalOnly && !action.launch_critical) return false;
-      if (needle) {
-        const haystack = [action.phase_name, action.section_name, action.action_title, action.objective, ...(action.tasks || []).map((task: any) => task.task_title)].join(' ').toLowerCase();
-        if (!haystack.includes(needle)) return false;
-      }
-      return true;
+  const taskContextByInstance = useMemo(() => {
+    const map = new Map();
+    (plan || []).forEach((phase: any) => {
+      (phase.sections || []).forEach((section: any) => {
+        (section.actions || []).forEach((action: any) => {
+          (action.tasks || []).forEach((task: any) => {
+            map.set(task.task_instance_id, { phase, section, action, task });
+          });
+        });
+      });
     });
-  }, [flatActions, phaseFilter, statusFilter, launchCriticalOnly, search]);
-
-  const nextVisibleActions = useMemo(() => filteredActions.filter((action: any) => action.action_code !== currentActionCode && action.status !== 'complete').slice(0, 2), [filteredActions, currentActionCode]);
-  const laterActions = useMemo(() => filteredActions.filter((action: any) => action.action_code !== currentActionCode && !nextVisibleActions.some((row: any) => row.action_code === action.action_code)), [filteredActions, currentActionCode, nextVisibleActions]);
-
-  const laterActionsByPhase = useMemo(() => {
-    const groups = new Map<string, any[]>();
-    laterActions.forEach((action: any) => {
-      const key = action.phase_name;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(action);
-    });
-    return Array.from(groups.entries());
-  }, [laterActions]);
+    return map;
+  }, [plan]);
 
   const documentRows = useMemo(() => {
     const needle = documentSearch.trim().toLowerCase();
-    return (evidence || [])
-      .map((doc: any) => {
-        const ctx = taskContextByInstance.get(doc.task_instance_id) || {};
-        return {
-          ...doc,
-          label: buildDocumentLabel(doc),
-          task_title: ctx.task?.task_title || 'Unlinked task',
-          action_title: ctx.action?.action_title || 'Unlinked action',
-          action_code: ctx.action?.action_code || null,
-          section_name: ctx.section_name || '—',
-          phase_name: ctx.phase_name || '—',
-          phase_code: ctx.phase_code || 'unknown',
-        };
-      })
-      .filter((doc: any) => {
-        if (documentPhaseFilter !== 'all' && doc.phase_code !== documentPhaseFilter) return false;
-        if (documentTypeFilter !== 'all' && doc.evidence_type !== documentTypeFilter) return false;
-        if (!needle) return true;
-        const hay = [doc.label, doc.task_title, doc.action_title, doc.section_name, doc.phase_name].join(' ').toLowerCase();
-        return hay.includes(needle);
-      });
+    return (evidence || []).map((doc: any) => {
+      const ctx = taskContextByInstance.get(doc.task_instance_id) || {};
+      return {
+        ...doc,
+        label: buildDocumentLabel(doc),
+        phase_name: ctx.phase?.phase_name || '—',
+        phase_code: ctx.phase?.phase_code || 'unknown',
+        section_name: ctx.section?.section_name || '—',
+        action_title: ctx.action?.action_title || 'Unlinked action',
+        action_code: ctx.action?.action_code || null,
+        task_title: ctx.task?.task_title || 'Unlinked task',
+      };
+    }).filter((doc: any) => {
+      if (documentPhaseFilter !== 'all' && doc.phase_code !== documentPhaseFilter) return false;
+      if (documentTypeFilter !== 'all' && doc.evidence_type !== documentTypeFilter) return false;
+      if (!needle) return true;
+      const hay = [doc.label, doc.phase_name, doc.section_name, doc.action_title, doc.task_title].join(' ').toLowerCase();
+      return hay.includes(needle);
+    });
   }, [evidence, taskContextByInstance, documentSearch, documentPhaseFilter, documentTypeFilter]);
 
-  const completionSummary = useMemo(() => {
-    const total = flatActions.length;
-    const done = flatActions.filter((row: any) => row.status === 'complete').length;
-    return { total, done };
-  }, [flatActions]);
-
-  const documentSummary = useMemo(() => {
-    const total = documentRows.length;
-    const linkedTasks = new Set(documentRows.map((doc: any) => doc.task_instance_id)).size;
-    const latest = documentRows
-      .map((doc: any) => new Date(doc.uploaded_at).getTime())
-      .filter((value: number) => Number.isFinite(value))
-      .sort((a: number, b: number) => b - a)[0];
-    return { total, linkedTasks, latest: latest ? new Date(latest).toLocaleDateString() : '—' };
-  }, [documentRows]);
-
   const documentTypes = useMemo(() => Array.from(new Set((evidence || []).map((doc: any) => doc.evidence_type).filter(Boolean))), [evidence]);
+
+  function openActionInExecution(actionCode?: string | null, phaseCode?: string | null) {
+    if (!actionCode) return;
+    if (phaseCode) setSelectedPhaseCode(phaseCode);
+    setOpenAction(actionCode);
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('view', 'execution');
+    if (assessmentId) params.set('assessmentId', assessmentId);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  const overviewCurrentAction = nextActions[0] || null;
+  const nextVisible = nextActions.slice(1, 3);
 
   if (loading) return <div style={{ padding: 16 }}>Loading Business Readiness…</div>;
   if (!assessmentId) return <Card>No assessment selected yet.</Card>;
@@ -470,46 +503,40 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     return (
       <div style={{ display: 'grid', gap: 16 }}>
         <Card>
-          <SectionTitle>Start Business Readiness</SectionTitle>
-          <SmallMuted>Tell Kinto what you are starting and it will build the first execution workspace.</SmallMuted>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>Start Business Readiness</div>
+          <SmallMuted style={{ marginTop: 6 }}>Tell Kinto what you are starting and it will generate the first execution workspace.</SmallMuted>
           <div style={{ display: 'grid', gap: 12, marginTop: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
             <label>
               <SmallMuted>Business type</SmallMuted>
-              <select value={form.businessTypeCode} onChange={(e) => setForm((current) => ({ ...current, businessTypeCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                {businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
-              </select>
+              <select value={initForm.businessTypeCode} onChange={(e) => setInitForm((current: any) => ({ ...current, businessTypeCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
             </label>
             <label>
               <SmallMuted>Region</SmallMuted>
-              <select value={form.primaryRegionCode} onChange={(e) => setForm((current) => ({ ...current, primaryRegionCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                {regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}
-              </select>
+              <select value={initForm.primaryRegionCode} onChange={(e) => setInitForm((current: any) => ({ ...current, primaryRegionCode: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
             </label>
             <label>
               <SmallMuted>Business name</SmallMuted>
-              <input value={form.businessName} onChange={(e) => setForm((current) => ({ ...current, businessName: e.target.value }))} placeholder="Example: Kinto Test Advisory" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.businessName} onChange={(e) => setInitForm((current: any) => ({ ...current, businessName: e.target.value }))} placeholder="Example: Kinto Test Advisory" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>Founder name</SmallMuted>
-              <input value={form.founderName} onChange={(e) => setForm((current) => ({ ...current, founderName: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.founderName} onChange={(e) => setInitForm((current: any) => ({ ...current, founderName: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>What will you sell?</SmallMuted>
-              <input value={form.whatYouSell} onChange={(e) => setForm((current) => ({ ...current, whatYouSell: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.whatYouSell} onChange={(e) => setInitForm((current: any) => ({ ...current, whatYouSell: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label>
               <SmallMuted>Target customer</SmallMuted>
-              <input value={form.targetCustomer} onChange={(e) => setForm((current) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
+              <input value={initForm.targetCustomer} onChange={(e) => setInitForm((current: any) => ({ ...current, targetCustomer: e.target.value }))} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
             </label>
             <label style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 24 }}>
-              <input type="checkbox" checked={Boolean(form.hiringStaff)} onChange={(e) => setForm((current) => ({ ...current, hiringStaff: e.target.checked }))} />
+              <input type="checkbox" checked={Boolean(initForm.hiringStaff)} onChange={(e) => setInitForm((current: any) => ({ ...current, hiringStaff: e.target.checked }))} />
               <span style={{ fontSize: 13, color: '#374151' }}>I plan to hire staff soon</span>
             </label>
           </div>
           <div style={{ marginTop: 14 }}>
-            <button onClick={initializeWorkspace} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>
-              {saving ? 'Creating workspace…' : 'Create workspace'}
-            </button>
+            <button onClick={initializeWorkspace} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>{saving ? 'Creating workspace…' : 'Create workspace'}</button>
           </div>
         </Card>
         {error ? <Card><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
@@ -519,92 +546,101 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
-      {error ? <Card><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
+      {error ? <Card style={{ borderLeftColor: '#ef4444' }}><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
 
-      <Card style={{ padding: 18 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.4fr) repeat(5, minmax(120px, 0.7fr))', gap: 12, alignItems: 'stretch' }}>
+      <Card>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.4fr) repeat(4, minmax(120px, 0.7fr))', gap: 12 }}>
           <div>
             <GroupLabel>Business context</GroupLabel>
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 6 }}>{profile?.business_name || 'Business Readiness workspace'}</div>
-            <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
               <StatusPill label={workspace?.launch_ready_flag ? 'ready' : 'blocked'} />
               <span style={{ fontSize: 12, color: '#6b7280' }}>{businessTypeLabel}</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>•</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>{regionLabel}</span>
-              {data?.employerIntent ? <><span style={{ fontSize: 12, color: '#6b7280' }}>•</span><span style={{ fontSize: 12, color: '#6b7280' }}>Hiring staff</span></> : null}
+              {previewMode ? <><span style={{ fontSize: 12, color: '#6b7280' }}>•</span><StatusPill label="preview" /></> : null}
             </div>
             <SmallMuted style={{ marginTop: 10 }}>{profile?.business_description || 'Execution workspace for getting this business launch-ready and operating-ready.'}</SmallMuted>
           </div>
-          <Card style={{ padding: 14 }}>
+          <div>
             <SmallMuted>Current phase</SmallMuted>
-            <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{currentPhaseName}</div>
-            <div style={{ marginTop: 8 }}><StatusPill label={phaseStates.find((row: any) => row.phase_code === workspace?.current_phase_code)?.status || 'current'} /></div>
-          </Card>
-          <Card style={{ padding: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 18, marginTop: 6 }}>{phaseSummaries.find((row: any) => row.current)?.phase_name || phaseSummaries[0]?.phase_name || '—'}</div>
+            <div style={{ marginTop: 8 }}><StatusPill label={phaseSummaries.find((row: any) => row.current)?.progressPct > 0 ? 'in_progress' : 'planned'} /></div>
+          </div>
+          <div>
             <SmallMuted>Readiness</SmallMuted>
-            <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{sentenceCase(workspace?.overall_readiness_state)}</div>
-            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{completionSummary.done} of {completionSummary.total} actions complete</div>
-          </Card>
-          <Card style={{ padding: 14 }}>
-            <SmallMuted>Open blockers</SmallMuted>
-            <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{blockers.length}</div>
-            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{blockers.length ? 'Resolve these before launch' : 'No active blockers right now'}</div>
-          </Card>
-          <Card style={{ padding: 14 }}>
-            <SmallMuted>Documents</SmallMuted>
-            <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{documentRows.length}</div>
-            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>Linked to execution tasks</div>
-          </Card>
-          <Card style={{ padding: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 18, marginTop: 6 }}>{sentenceCase(workspace?.overall_readiness_state)}</div>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{phaseSummaries.reduce((sum: number, row: any) => sum + row.completedTasks, 0)} of {phaseSummaries.reduce((sum: number, row: any) => sum + row.totalTasks, 0)} tasks complete</div>
+          </div>
+          <div>
+            <SmallMuted>Critical actions open</SmallMuted>
+            <div style={{ fontWeight: 700, fontSize: 18, marginTop: 6 }}>{(nextActions || []).filter((row: any) => row.launch_critical).length}</div>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>Needs attention before launch</div>
+          </div>
+          <div>
             <SmallMuted>Current focus</SmallMuted>
-            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{currentAction?.action_title || nextActions?.[0]?.title || '—'}</div>
-            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{currentAction?.tasks?.find((task: any) => task.status !== 'done')?.task_title || nextActions?.[0]?.next_task_name || 'Kinto will surface the next task here.'}</div>
-          </Card>
+            <div style={{ fontWeight: 700, fontSize: 18, marginTop: 6 }}>{overviewCurrentAction?.title || currentAction?.action_title || '—'}</div>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{overviewCurrentAction?.next_task_name || currentAction?.tasks?.find((task: any) => task.status !== 'done')?.task_title || '—'}</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ borderLeftColor: '#cbd5e1' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div>
+            <GroupLabel>Content preview</GroupLabel>
+            <SmallMuted style={{ marginTop: 4 }}>Check how the execution content changes by region and business type without losing the current workspace context.</SmallMuted>
+          </div>
+          {previewMode ? <button onClick={() => {
+            setPreviewBusinessTypeCode(workspace.business_type_code);
+            setPreviewRegionCode(workspace.primary_region_code);
+            setPreviewEmployerIntent(Boolean(data?.employerIntent));
+          }} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700 }}>Reset to workspace</button> : null}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 220px))', gap: 10, marginTop: 12 }}>
+          <label>
+            <SmallMuted>Business type</SmallMuted>
+            <select value={previewBusinessTypeCode} onChange={(e) => setPreviewBusinessTypeCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{businessTypes.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+          </label>
+          <label>
+            <SmallMuted>Region</SmallMuted>
+            <select value={previewRegionCode} onChange={(e) => setPreviewRegionCode(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>{regions.map((row: any) => <option key={row.code} value={row.code}>{row.label}</option>)}</select>
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 28 }}>
+            <input type="checkbox" checked={previewEmployerIntent} onChange={(e) => setPreviewEmployerIntent(e.target.checked)} />
+            <span style={{ fontSize: 13, color: '#374151' }}>Preview hiring intent</span>
+          </label>
         </div>
       </Card>
 
       {activeView === 'overview' ? (
-        <div style={{ display: 'grid', gap: 16 }}>
-          <Card style={{ background: '#f9fffb', borderColor: '#d1fae5' }}>
-            <GroupLabel>Start here</GroupLabel>
-            {currentAction ? (
-              <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ fontWeight: 800, fontSize: 22 }}>{currentAction.action_title}</div>
-                  {currentAction.launch_critical ? <StatusPill label="critical" /> : null}
-                  <StatusPill label={currentAction.status} />
-                </div>
-                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{currentAction.objective}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) minmax(240px, 1fr)', gap: 12 }}>
-                  <Card style={{ padding: 12 }}>
-                    <SmallMuted>Do this now</SmallMuted>
-                    <div style={{ fontWeight: 700, marginTop: 6 }}>{currentAction.tasks.find((task: any) => task.status !== 'done')?.task_title || 'All tasks complete'}</div>
-                    <SmallMuted style={{ marginTop: 6 }}>Open Execution to complete the tasks for this action.</SmallMuted>
-                  </Card>
-                  <Card style={{ padding: 12 }}>
-                    <SmallMuted>What this unlocks</SmallMuted>
-                    <div style={{ fontWeight: 700, marginTop: 6 }}>{nextVisibleActions[0]?.action_title || 'Next action will appear here'}</div>
-                    <SmallMuted style={{ marginTop: 6 }}>Kinto will move you forward once this action is complete.</SmallMuted>
-                  </Card>
-                </div>
-              </div>
-            ) : <SmallMuted style={{ marginTop: 8 }}>No current action available.</SmallMuted>}
-          </Card>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.1fr) minmax(280px, 0.9fr)', gap: 16 }}>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(280px, 1fr)', gap: 16 }}>
             <Card>
-              <SectionTitle>Sponsor summary</SectionTitle>
-              <div style={{ marginTop: 10, lineHeight: 1.55 }}>{data?.summary}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Start here</div>
+              <SmallMuted>{overviewCurrentAction?.reason || currentAction?.objective || 'Kinto will show the current action here.'}</SmallMuted>
+              <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: '#f8fafc', border: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{overviewCurrentAction?.title || currentAction?.action_title || 'No action selected'}</div>
+                  {overviewCurrentAction?.launch_critical || currentAction?.launch_critical ? <StatusPill label="critical" /> : null}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 14, color: '#374151' }}>Start with: <strong>{overviewCurrentAction?.next_task_name || currentAction?.tasks?.find((task: any) => task.status !== 'done')?.task_title || '—'}</strong></div>
+                <button onClick={() => openActionInExecution(overviewCurrentAction?.action_code || currentAction?.action_code, currentAction?.phase_code)} style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 700 }}>Open in Execution</button>
+              </div>
             </Card>
             <Card>
-              <SectionTitle>Up next</SectionTitle>
-              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                {nextVisibleActions.length ? nextVisibleActions.map((item: any, index: number) => (
-                  <div key={item.action_code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 700 }}>{index + 1}. {item.action_title}</div>
-                    <SmallMuted style={{ marginTop: 4 }}>{item.objective}</SmallMuted>
+              <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Up next</div>
+              <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+                {nextVisible.length ? nextVisible.map((item: any, index: number) => (
+                  <div key={item.action_code} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 700 }}>{index + 1}. {item.title}</div>
+                      {item.launch_critical ? <StatusPill label="critical" /> : null}
+                    </div>
+                    <SmallMuted style={{ marginTop: 4 }}>{item.reason}</SmallMuted>
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#374151' }}>Start with: <strong>{item.next_task_name || 'First task in this action'}</strong></div>
                   </div>
-                )) : <SmallMuted>No later actions are visible yet.</SmallMuted>}
+                )) : <SmallMuted>No next actions available.</SmallMuted>}
               </div>
             </Card>
           </div>
@@ -612,299 +648,145 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
-                <SectionTitle>Launch blockers</SectionTitle>
-                <SmallMuted>Only the blockers that are stopping launch or the next critical step.</SmallMuted>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>Launch blockers</div>
+                <SmallMuted>Critical actions keeping launch from turning green.</SmallMuted>
               </div>
-              <button onClick={runLaunchCheck} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #111827', background: '#fff', color: '#111827', fontWeight: 600 }}>
-                {saving ? 'Refreshing…' : 'Run launch check'}
-              </button>
+              <button onClick={runLaunchCheck} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #111827', background: '#fff', color: '#111827', fontWeight: 700 }}>{saving ? 'Refreshing…' : 'Run launch check'}</button>
             </div>
             <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-              {blockers.length ? blockers.slice(0, 3).map((row: any) => (
-                <div key={row.blocker_id} style={{ padding: 12, border: '1px solid #fee2e2', borderRadius: 12, background: '#fff7f7', display: 'grid', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+              {blockers.length ? blockers.map((row: any) => (
+                <div key={row.blocker_id} style={{ padding: 12, borderRadius: 12, background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div>
                     <div style={{ fontWeight: 700 }}>{row.title}</div>
-                    <StatusPill label={row.severity} />
+                    <SmallMuted style={{ marginTop: 4 }}>{row.description}</SmallMuted>
                   </div>
-                  <SmallMuted>{row.description}</SmallMuted>
+                  <StatusPill label={row.severity || 'high'} />
                 </div>
-              )) : <SmallMuted>No active launch blockers right now.</SmallMuted>}
+              )) : <SmallMuted>No blockers right now.</SmallMuted>}
             </div>
           </Card>
-
-          <Card>
-            <SectionTitle>Upcoming obligations</SectionTitle>
-            <SmallMuted>These are the recurring items Kinto wants you to prepare for once the business is live.</SmallMuted>
-            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-              {recurringObligations.length ? recurringObligations.slice(0, 3).map((item: any) => (
-                <div key={item.code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12, display: 'grid', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ fontWeight: 700 }}>{item.title}</div>
-                    <StatusPill label={item.status} />
-                  </div>
-                  <SmallMuted>{item.note}</SmallMuted>
-                  <div style={{ fontSize: 12, color: '#374151' }}><strong>Cadence:</strong> {item.cadence} • <strong>Start:</strong> {item.when_to_start}</div>
-                </div>
-              )) : <SmallMuted>No recurring obligations are active yet for this workspace.</SmallMuted>}
-            </div>
-          </Card>
-        </div>
+        </>
       ) : null}
 
       {activeView === 'execution' ? (
         <div style={{ display: 'grid', gap: 16 }}>
-          <Card style={{ background: '#f9fffb', borderColor: currentAction?.launch_critical ? '#fecaca' : '#d1fae5' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <div style={{ maxWidth: 860 }}>
-                <GroupLabel>Current action</GroupLabel>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800 }}>{currentAction?.action_title || 'No current action available'}</div>
-                  {currentAction?.launch_critical ? <StatusPill label="critical" /> : null}
-                  {currentAction ? <StatusPill label={currentAction.status} /> : null}
-                </div>
-                <div style={{ marginTop: 8, fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>{currentAction?.objective || 'Kinto will surface the current action here.'}</div>
-                {currentAction ? (
-                  <div style={{ marginTop: 12, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13, color: '#4b5563' }}>
-                    <span><strong>Phase:</strong> {currentAction.phase_name}</span>
-                    <span><strong>Section:</strong> {currentAction.section_name}</span>
-                    <span><strong>Tasks complete:</strong> {currentAction.completed_tasks} / {currentAction.total_tasks}</span>
-                  </div>
-                ) : null}
-              </div>
-              {currentAction ? (
-                <div style={{ minWidth: 220 }}>
-                  <SmallMuted>Action progress</SmallMuted>
-                  <div style={{ marginTop: 10 }}><ProgressBar percent={currentAction.progress_pct} /></div>
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>{currentAction.progress_pct}% complete</div>
-                </div>
-              ) : null}
-            </div>
-          </Card>
-
           {currentAction ? (
             <Card>
-              <SectionTitle>Complete these tasks now</SectionTitle>
-              <SmallMuted>Focus on this action first. Kinto will move the next action up once these tasks are complete.</SmallMuted>
-              <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
-                {currentAction.tasks.map((task: any) => {
-                  const linkedDocs = docsByTask.get(task.task_instance_id) || [];
-                  const isComposerOpen = showDocComposerForTask === task.task_instance_id;
-                  return (
-                    <TaskBlock
-                      key={task.task_code}
-                      task={task}
-                      linkedDocs={linkedDocs}
-                      saving={saving}
-                      onStart={() => updateTask(task.task_instance_id, 'in_progress')}
-                      onComplete={() => updateTask(task.task_instance_id, 'done')}
-                      showComposer={isComposerOpen}
-                      setShowComposer={setShowDocComposerForTask}
-                      docDraft={docDraft}
-                      setDocDraft={setDocDraft}
-                      onSaveDoc={() => addTaskDocument(task.task_instance_id)}
-                    />
-                  );
-                })}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#14b8a6' }}>🚀 Business Readiness</span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>{businessTypeLabel}</span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>•</span>
+                <span style={{ fontSize: 12, color: '#6b7280' }}>{regionLabel}</span>
+                <StatusPill label={currentAction.status} />
+                {currentAction.launch_critical ? <StatusPill label="critical" /> : null}
+              </div>
+              <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15 }}>{currentAction.action_title}</div>
+              <SmallMuted style={{ marginTop: 8, fontSize: 15 }}>{currentAction.objective}</SmallMuted>
+              <div style={{ marginTop: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+                  <span>Progress</span>
+                  <span>{currentAction.progress_pct}%</span>
+                </div>
+                <ProgressBar percent={currentAction.progress_pct} />
               </div>
             </Card>
           ) : null}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: 16 }}>
-            <Card>
-              <SectionTitle>Up next</SectionTitle>
-              <SmallMuted>These actions become important after the current one.</SmallMuted>
-              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                {nextVisibleActions.length ? nextVisibleActions.map((action: any) => (
-                  <div key={action.action_code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <div style={{ fontWeight: 700 }}>{action.action_title}</div>
-                      {action.launch_critical ? <StatusPill label="critical" /> : null}
-                    </div>
-                    <SmallMuted style={{ marginTop: 4 }}>{action.objective}</SmallMuted>
-                    <button onClick={() => openActionInExecution(action.action_code)} style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Make current action</button>
-                  </div>
-                )) : <SmallMuted>No next actions visible yet.</SmallMuted>}
-              </div>
-            </Card>
-
-            <Card>
-              <SectionTitle>Need a different view?</SectionTitle>
-              <SmallMuted>Search and filters are available, but they stay secondary so the main focus remains execution.</SmallMuted>
-              <div style={{ marginTop: 12 }}>
-                <button onClick={() => setShowAdvancedFilters((current) => !current)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>
-                  {showAdvancedFilters ? 'Hide search and filters' : 'Show search and filters'}
+          <Card>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {phaseSummaries.map((phase: any) => (
+                <button key={phase.phase_code} onClick={() => { setSelectedPhaseCode(phase.phase_code); setOpenAction(null); }} style={{ padding: '10px 12px', borderRadius: 10, border: phase.phase_code === selectedPhaseCode ? '1px solid #14b8a6' : '1px solid #e5e7eb', background: phase.phase_code === selectedPhaseCode ? '#ecfeff' : '#fff', textAlign: 'left', minWidth: 170, cursor: 'pointer' }}>
+                  <div style={{ fontWeight: 700, color: '#111827' }}>{phase.phase_name}</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{phase.completedTasks}/{phase.totalTasks} tasks complete</div>
                 </button>
-              </div>
-              {showAdvancedFilters ? (
-                <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search actions or tasks" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
-                    <label>
-                      <SmallMuted>Phase</SmallMuted>
-                      <select value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                        <option value="all">All phases</option>
-                        {phaseStates.map((phase: any) => <option key={phase.phase_code} value={phase.phase_code}>{phase.phase_name}</option>)}
-                      </select>
-                    </label>
-                    <label>
-                      <SmallMuted>Status</SmallMuted>
-                      <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                        <option value="all">All statuses</option>
-                        <option value="not_started">Not started</option>
-                        <option value="in_progress">In progress</option>
-                        <option value="complete">Complete</option>
-                      </select>
-                    </label>
-                    <button onClick={() => setLaunchCriticalOnly((current) => !current)} style={{ marginTop: 20, padding: '10px 14px', borderRadius: 8, border: launchCriticalOnly ? '1px solid #fca5a5' : '1px solid #d1d5db', background: launchCriticalOnly ? '#fff7f7' : '#fff', color: launchCriticalOnly ? '#b91c1c' : '#111827', fontWeight: 600 }}>
-                      {launchCriticalOnly ? 'Launch critical only' : 'Show all actions'}
-                    </button>
-                  </div>
+              ))}
+            </div>
+          </Card>
+
+          {(phaseSections || []).map((section: any) => (
+            <Card key={section.section_code} style={{ borderLeftColor: '#cbd5e1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                <div>
+                  <GroupLabel>{section.section_name}</GroupLabel>
+                  <SmallMuted style={{ marginTop: 4 }}>{section.actions.length} action{section.actions.length === 1 ? '' : 's'} in this section</SmallMuted>
                 </div>
-              ) : null}
+              </div>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {section.actions.map((action: any) => (
+                  <ActionCard
+                    key={action.action_code}
+                    action={{ ...action, phase_code: phaseView?.phase_code, phase_name: phaseView?.phase_name, section_code: section.section_code, section_name: section.section_name }}
+                    current={currentAction?.action_code === action.action_code}
+                    docsByTask={docsByTask}
+                    expandedTaskId={expandedTaskId}
+                    setExpandedTaskId={setExpandedTaskId}
+                    onOpen={() => setOpenAction(currentAction?.action_code === action.action_code ? null : action.action_code)}
+                    onStartTask={(taskInstanceId: string) => updateTask(taskInstanceId, 'in_progress')}
+                    onCompleteTask={(taskInstanceId: string) => updateTask(taskInstanceId, 'done')}
+                    saving={saving}
+                    previewMode={previewMode}
+                    showDocComposerForTask={showDocComposerForTask}
+                    setShowDocComposerForTask={setShowDocComposerForTask}
+                    docDraft={docDraft}
+                    setDocDraft={setDocDraft}
+                    addTaskDocument={addTaskDocument}
+                  />
+                ))}
+              </div>
             </Card>
-          </div>
-
-          <Card>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div>
-                <SectionTitle>Later actions</SectionTitle>
-                <SmallMuted>Everything else stays collapsed until you need it.</SmallMuted>
-              </div>
-              <button onClick={() => setShowLater((current) => !current)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>
-                {showLater ? 'Hide later actions' : 'Show later actions'}
-              </button>
-            </div>
-            {showLater ? (
-              <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
-                {laterActionsByPhase.length ? laterActionsByPhase.map(([phaseName, actions]: any) => (
-                  <details key={phaseName} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12, background: '#fff' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{phaseName} ({actions.length})</summary>
-                    <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
-                      {actions.map((action: any) => (
-                        <div key={action.action_code} style={{ border: '1px solid #f3f4f6', borderRadius: 10, padding: 10 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <div style={{ fontWeight: 700 }}>{action.action_title}</div>
-                            <StatusPill label={action.status === 'complete' ? 'complete' : 'later'} />
-                          </div>
-                          <SmallMuted style={{ marginTop: 4 }}>{action.objective}</SmallMuted>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )) : <SmallMuted>No later actions available right now.</SmallMuted>}
-              </div>
-            ) : null}
-          </Card>
-
-          <Card>
-            <SectionTitle>Recurring obligations</SectionTitle>
-            <SmallMuted>Keep these visible so launch readiness becomes operating discipline, not just setup completion.</SmallMuted>
-            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-              {recurringObligations.length ? recurringObligations.map((item: any) => (
-                <div key={item.code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12, display: 'grid', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ fontWeight: 700 }}>{item.title}</div>
-                    <StatusPill label={item.status} />
-                  </div>
-                  <SmallMuted>{item.note}</SmallMuted>
-                  <div style={{ fontSize: 12, color: '#374151' }}><strong>Cadence:</strong> {item.cadence}</div>
-                  {!!item.where_to_do_this?.length && <div style={{ fontSize: 12, color: '#374151' }}><strong>Where to do this:</strong> {item.where_to_do_this.join(' • ')}</div>}
-                  {!!item.record_and_save?.length && <div style={{ fontSize: 12, color: '#374151' }}><strong>Record and save:</strong> {item.record_and_save.join(' • ')}</div>}
-                </div>
-              )) : <SmallMuted>No recurring obligations are active yet for this workspace.</SmallMuted>}
-            </div>
-          </Card>
+          ))}
         </div>
       ) : null}
 
       {activeView === 'documents' ? (
         <div style={{ display: 'grid', gap: 16 }}>
           <Card>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-              <Card style={{ padding: 14 }}>
-                <SmallMuted>Total documents</SmallMuted>
-                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentSummary.total}</div>
-              </Card>
-              <Card style={{ padding: 14 }}>
-                <SmallMuted>Linked tasks</SmallMuted>
-                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentSummary.linkedTasks}</div>
-              </Card>
-              <Card style={{ padding: 14 }}>
-                <SmallMuted>Latest saved</SmallMuted>
-                <div style={{ fontSize: 18, fontWeight: 800, marginTop: 8 }}>{documentSummary.latest}</div>
-              </Card>
-              <Card style={{ padding: 14 }}>
-                <SmallMuted>Current phase files</SmallMuted>
-                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentRows.filter((doc: any) => doc.phase_code === workspace?.current_phase_code).length}</div>
-              </Card>
-            </div>
-          </Card>
-
-          <Card>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(160px, 1fr))', gap: 12 }}>
               <div>
-                <SectionTitle>Document repository</SectionTitle>
-                <SmallMuted>Files and links saved against Business Readiness tasks. Filter them by phase or type, then jump back into the related work.</SmallMuted>
+                <SmallMuted>Total documents</SmallMuted>
+                <div style={{ fontWeight: 700, fontSize: 22, marginTop: 6 }}>{documentRows.length}</div>
+              </div>
+              <div>
+                <SmallMuted>Linked tasks</SmallMuted>
+                <div style={{ fontWeight: 700, fontSize: 22, marginTop: 6 }}>{new Set(documentRows.map((row: any) => row.task_instance_id)).size}</div>
+              </div>
+              <div>
+                <SmallMuted>Latest saved</SmallMuted>
+                <div style={{ fontWeight: 700, fontSize: 22, marginTop: 6 }}>{documentRows.map((row: any) => new Date(row.uploaded_at).getTime()).sort((a: number, b: number) => b - a)[0] ? new Date(documentRows.map((row: any) => new Date(row.uploaded_at).getTime()).sort((a: number, b: number) => b - a)[0]).toLocaleDateString() : '—'}</div>
+              </div>
+              <div>
+                <SmallMuted>Current phase files</SmallMuted>
+                <div style={{ fontWeight: 700, fontSize: 22, marginTop: 6 }}>{documentRows.filter((row: any) => row.phase_code === workspace?.current_phase_code).length}</div>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) repeat(2, minmax(160px, 0.55fr))', gap: 10, marginTop: 14 }}>
-              <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, tasks, or actions" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-              <label>
-                <SmallMuted>Phase</SmallMuted>
-                <select value={documentPhaseFilter} onChange={(e) => setDocumentPhaseFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                  <option value="all">All phases</option>
-                  {phaseStates.map((phase: any) => <option key={phase.phase_code} value={phase.phase_code}>{phase.phase_name}</option>)}
-                </select>
-              </label>
-              <label>
-                <SmallMuted>Type</SmallMuted>
-                <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                  <option value="all">All document types</option>
-                  {documentTypes.map((type: any) => <option key={String(type)} value={String(type)}>{sentenceCase(String(type))}</option>)}
-                </select>
-              </label>
+          </Card>
+          <Card style={{ borderLeftColor: '#cbd5e1' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(180px, 220px) minmax(180px, 220px)', gap: 10, marginBottom: 12 }}>
+              <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, phases, sections, actions, or tasks" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+              <select value={documentPhaseFilter} onChange={(e) => setDocumentPhaseFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
+                <option value="all">All phases</option>
+                {phaseSummaries.map((row: any) => <option key={row.phase_code} value={row.phase_code}>{row.phase_name}</option>)}
+              </select>
+              <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}>
+                <option value="all">All types</option>
+                {documentTypes.map((row: any) => <option key={row} value={row}>{sentenceCase(row)}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {documentRows.length ? documentRows.map((doc: any) => (
+                <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{doc.label}</div>
+                    <SmallMuted style={{ marginTop: 4 }}>{doc.phase_name} → {doc.section_name} → {doc.action_title} → {doc.task_title}</SmallMuted>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <StatusPill label={doc.evidence_type || 'file'} />
+                    <button onClick={() => openActionInExecution(doc.action_code, doc.phase_code)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700 }}>Open task</button>
+                  </div>
+                </div>
+              )) : <SmallMuted>No documents found for the current filters.</SmallMuted>}
             </div>
           </Card>
-
-          {documentRows.length ? (
-            <div style={{ display: 'grid', gap: 12 }}>
-              {documentRows.map((doc: any) => (
-                <Card key={doc.evidence_id} style={{ padding: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1.1fr) repeat(4, minmax(120px, 0.6fr)) auto', gap: 12, alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{doc.label}</div>
-                      <div style={{ marginTop: 4, fontSize: 13, color: '#4b5563' }}>{doc.action_title}</div>
-                      <div style={{ marginTop: 2, fontSize: 12, color: '#6b7280' }}>{doc.task_title}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Phase</div>
-                      <div style={{ fontWeight: 600, marginTop: 4 }}>{doc.phase_name}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Section</div>
-                      <div style={{ fontWeight: 600, marginTop: 4 }}>{doc.section_name}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Type</div>
-                      <div style={{ fontWeight: 600, marginTop: 4 }}>{sentenceCase(doc.evidence_type)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Saved</div>
-                      <div style={{ fontWeight: 600, marginTop: 4 }}>{new Date(doc.uploaded_at).toLocaleDateString()}</div>
-                    </div>
-                    <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
-                      {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
-                      {doc.action_code ? <button onClick={() => openActionInExecution(doc.action_code)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12 }}>Open task</button> : null}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <SmallMuted>No documents match this view yet. Add files or links from a task inside Execution.</SmallMuted>
-            </Card>
-          )}
         </div>
       ) : null}
     </div>
