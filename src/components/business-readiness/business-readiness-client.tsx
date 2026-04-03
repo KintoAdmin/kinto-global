@@ -52,8 +52,8 @@ function StatusPill({ label }: { label: string }) {
   );
 }
 
-function SmallMuted({ children }: any) {
-  return <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.45 }}>{children}</div>;
+function SmallMuted({ children, style }: any) {
+  return <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.45, ...style }}>{children}</div>;
 }
 
 function Card({ children, style }: any) {
@@ -83,6 +83,89 @@ function buildDocumentLabel(doc: any) {
   return doc?.note_text || doc?.file_url || doc?.external_link || 'Saved document';
 }
 
+function GroupLabel({ children }: any) {
+  return <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.3, color: '#6b7280' }}>{children}</div>;
+}
+
+function TaskBlock({ task, linkedDocs, saving, onStart, onComplete, showComposer, setShowComposer, docDraft, setDocDraft, onSaveDoc }: any) {
+  return (
+    <Card style={{ padding: 14, background: task.status === 'done' ? '#fbfffc' : '#fff' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ fontWeight: 700 }}>{task.task_title}</div>
+            {task.optional ? <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>Optional</span> : null}
+          </div>
+          <div style={{ marginTop: 8, display: 'grid', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Instructions</div>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#374151' }}>{task.instructions}</div>
+            </div>
+            {!!task.requirements?.length && (
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Requirements</div>
+                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
+                  {task.requirements.map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            )}
+            {!!task.where_to_do_this?.length && (
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Where to do this</div>
+                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
+                  {task.where_to_do_this.map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            )}
+            {!!task.record_and_save?.length && (
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Record and save</div>
+                <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
+                  {task.record_and_save.map((item: string) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gap: 8, minWidth: 180, justifyItems: 'end' }}>
+          <StatusPill label={task.status} />
+          <button onClick={onStart} disabled={saving || task.status === 'done'} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, width: '100%' }}>Mark started</button>
+          <button onClick={onComplete} disabled={saving} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600, width: '100%' }}>Mark complete</button>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 14, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 12, fontWeight: 700 }}>Files</div>
+          <button onClick={() => setShowComposer(showComposer ? null : task.task_instance_id)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12 }}>
+            {showComposer ? 'Cancel' : 'Add file or link'}
+          </button>
+        </div>
+        {linkedDocs.length ? (
+          <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+            {linkedDocs.map((doc: any) => (
+              <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+                </div>
+                {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
+              </div>
+            ))}
+          </div>
+        ) : <SmallMuted style={{ marginTop: 8 }}>No files linked to this task yet.</SmallMuted>}
+        {showComposer ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
+            <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+            <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+            <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
+          </div>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
+
 export function BusinessReadinessClient({ assessmentId, initialData, view = 'overview' }: Props) {
   const activeView = view === 'roadmap' ? 'execution' : view;
   const [data, setData] = useState<any>(initialData || null);
@@ -98,10 +181,12 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     targetCustomer: '',
     whatYouSell: '',
   });
-  const [phaseFilter, setPhaseFilter] = useState<'all' | 'current' | string>('current');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [phaseFilter, setPhaseFilter] = useState<'all' | string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
   const [launchCriticalOnly, setLaunchCriticalOnly] = useState(false);
   const [search, setSearch] = useState('');
+  const [showLater, setShowLater] = useState(false);
   const [showDocComposerForTask, setShowDocComposerForTask] = useState<string | null>(null);
   const [docDraft, setDocDraft] = useState({ name: '', link: '' });
   const [documentSearch, setDocumentSearch] = useState('');
@@ -272,18 +357,18 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     return map;
   }, [evidence]);
 
-  const currentActionCode = openAction || nextActions?.[0]?.action_code || flatActions.find((row: any) => row.status !== 'complete')?.action_code || null;
+  const suggestedActionCode = nextActions?.[0]?.action_code || flatActions.find((row: any) => row.status !== 'complete')?.action_code || flatActions[0]?.action_code || null;
   useEffect(() => {
-    if (!openAction && currentActionCode) setOpenAction(currentActionCode);
-  }, [currentActionCode]);
+    if (!openAction && suggestedActionCode) setOpenAction(suggestedActionCode);
+  }, [suggestedActionCode]);
 
+  const currentActionCode = openAction || suggestedActionCode;
   const currentAction = flatActions.find((row: any) => row.action_code === currentActionCode) || null;
 
-  const visibleActions = useMemo(() => {
+  const filteredActions = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return flatActions.filter((action: any) => {
-      if (phaseFilter === 'current' && action.phase_code !== workspace?.current_phase_code) return false;
-      if (phaseFilter !== 'all' && phaseFilter !== 'current' && action.phase_code !== phaseFilter) return false;
+      if (phaseFilter !== 'all' && action.phase_code !== phaseFilter) return false;
       if (statusFilter !== 'all' && action.status !== statusFilter) return false;
       if (launchCriticalOnly && !action.launch_critical) return false;
       if (needle) {
@@ -292,9 +377,20 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       }
       return true;
     });
-  }, [flatActions, phaseFilter, workspace?.current_phase_code, statusFilter, launchCriticalOnly, search]);
+  }, [flatActions, phaseFilter, statusFilter, launchCriticalOnly, search]);
 
-  const nextVisibleActions = useMemo(() => visibleActions.filter((action: any) => action.action_code !== currentActionCode).slice(0, 6), [visibleActions, currentActionCode]);
+  const nextVisibleActions = useMemo(() => filteredActions.filter((action: any) => action.action_code !== currentActionCode && action.status !== 'complete').slice(0, 2), [filteredActions, currentActionCode]);
+  const laterActions = useMemo(() => filteredActions.filter((action: any) => action.action_code !== currentActionCode && !nextVisibleActions.some((row: any) => row.action_code === action.action_code)), [filteredActions, currentActionCode, nextVisibleActions]);
+
+  const laterActionsByPhase = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    laterActions.forEach((action: any) => {
+      const key = action.phase_name;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(action);
+    });
+    return Array.from(groups.entries());
+  }, [laterActions]);
 
   const documentRows = useMemo(() => {
     const needle = documentSearch.trim().toLowerCase();
@@ -378,9 +474,9 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       {error ? <Card><div style={{ color: '#b91c1c' }}>{error}</div></Card> : null}
 
       <Card style={{ padding: 18 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1.3fr) repeat(5, minmax(120px, 0.8fr))', gap: 12, alignItems: 'stretch' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.4fr) repeat(5, minmax(120px, 0.7fr))', gap: 12, alignItems: 'stretch' }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.3 }}>Business context</div>
+            <GroupLabel>Business context</GroupLabel>
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 6 }}>{profile?.business_name || 'Business Readiness workspace'}</div>
             <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <StatusPill label={workspace?.launch_ready_flag ? 'ready' : 'blocked'} />
@@ -388,7 +484,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
               <span style={{ fontSize: 12, color: '#6b7280' }}>•</span>
               <span style={{ fontSize: 12, color: '#6b7280' }}>{regionLabel}</span>
             </div>
-            <div style={{ marginTop: 10, fontSize: 13, color: '#4b5563', lineHeight: 1.5 }}>{profile?.business_description || 'Execution workspace for getting this business launch-ready and operating-ready.'}</div>
+            <SmallMuted style={{ marginTop: 10 }}>{profile?.business_description || 'Execution workspace for getting this business launch-ready and operating-ready.'}</SmallMuted>
           </div>
           <Card style={{ padding: 14 }}>
             <SmallMuted>Current phase</SmallMuted>
@@ -420,36 +516,46 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
 
       {activeView === 'overview' ? (
         <div style={{ display: 'grid', gap: 16 }}>
-          <Card>
-            <SectionTitle>Sponsor summary</SectionTitle>
-            <div style={{ marginTop: 10, lineHeight: 1.55 }}>{data?.summary}</div>
+          <Card style={{ background: '#f9fffb', borderColor: '#d1fae5' }}>
+            <GroupLabel>Start here</GroupLabel>
+            {currentAction ? (
+              <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ fontWeight: 800, fontSize: 22 }}>{currentAction.action_title}</div>
+                  {currentAction.launch_critical ? <StatusPill label="critical" /> : null}
+                  <StatusPill label={currentAction.status} />
+                </div>
+                <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{currentAction.objective}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) minmax(240px, 1fr)', gap: 12 }}>
+                  <Card style={{ padding: 12 }}>
+                    <SmallMuted>Do this now</SmallMuted>
+                    <div style={{ fontWeight: 700, marginTop: 6 }}>{currentAction.tasks.find((task: any) => task.status !== 'done')?.task_title || 'All tasks complete'}</div>
+                    <SmallMuted style={{ marginTop: 6 }}>Open Execution to complete the tasks for this action.</SmallMuted>
+                  </Card>
+                  <Card style={{ padding: 12 }}>
+                    <SmallMuted>What this unlocks</SmallMuted>
+                    <div style={{ fontWeight: 700, marginTop: 6 }}>{nextVisibleActions[0]?.action_title || 'Next action will appear here'}</div>
+                    <SmallMuted style={{ marginTop: 6 }}>Kinto will move you forward once this action is complete.</SmallMuted>
+                  </Card>
+                </div>
+              </div>
+            ) : <SmallMuted style={{ marginTop: 8 }}>No current action available.</SmallMuted>}
           </Card>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.1fr) minmax(280px, 0.9fr)', gap: 16 }}>
             <Card>
-              <SectionTitle>Current action</SectionTitle>
-              {currentAction ? (
-                <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ fontWeight: 700, fontSize: 18 }}>{currentAction.action_title}</div>
-                    {currentAction.launch_critical ? <StatusPill label="critical" /> : null}
-                    <StatusPill label={currentAction.status} />
-                  </div>
-                  <SmallMuted>{currentAction.objective}</SmallMuted>
-                  <div style={{ fontSize: 13 }}><strong>Section:</strong> {currentAction.section_name}</div>
-                  <div style={{ fontSize: 13 }}><strong>Next task:</strong> {currentAction.tasks.find((task: any) => task.status !== 'done')?.task_title || 'All tasks complete'}</div>
-                </div>
-              ) : <SmallMuted>No current action available.</SmallMuted>}
+              <SectionTitle>Sponsor summary</SectionTitle>
+              <div style={{ marginTop: 10, lineHeight: 1.55 }}>{data?.summary}</div>
             </Card>
             <Card>
-              <SectionTitle>Immediate priorities</SectionTitle>
+              <SectionTitle>Up next</SectionTitle>
               <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
-                {nextActions.slice(0, 3).map((item: any, index: number) => (
-                  <div key={item.id} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
-                    <div style={{ fontWeight: 700 }}>{index + 1}. {item.title}</div>
-                    <SmallMuted>{item.reason}</SmallMuted>
+                {nextVisibleActions.length ? nextVisibleActions.map((item: any, index: number) => (
+                  <div key={item.action_code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
+                    <div style={{ fontWeight: 700 }}>{index + 1}. {item.action_title}</div>
+                    <SmallMuted style={{ marginTop: 4 }}>{item.objective}</SmallMuted>
                   </div>
-                ))}
+                )) : <SmallMuted>No later actions are visible yet.</SmallMuted>}
               </div>
             </Card>
           </div>
@@ -458,14 +564,14 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
                 <SectionTitle>Launch blockers</SectionTitle>
-                <SmallMuted>Critical actions keeping launch from turning green.</SmallMuted>
+                <SmallMuted>Only the blockers that are stopping launch or the next critical step.</SmallMuted>
               </div>
               <button onClick={runLaunchCheck} disabled={saving} style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #111827', background: '#fff', color: '#111827', fontWeight: 600 }}>
                 {saving ? 'Refreshing…' : 'Run launch check'}
               </button>
             </div>
             <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-              {blockers.length ? blockers.slice(0, 4).map((row: any) => (
+              {blockers.length ? blockers.slice(0, 3).map((row: any) => (
                 <div key={row.blocker_id} style={{ padding: 12, border: '1px solid #fee2e2', borderRadius: 12, background: '#fff7f7', display: 'grid', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                     <div style={{ fontWeight: 700 }}>{row.title}</div>
@@ -481,48 +587,15 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
 
       {activeView === 'execution' ? (
         <div style={{ display: 'grid', gap: 16 }}>
-          <Card style={{ position: 'sticky', top: 12, zIndex: 2 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr repeat(3, minmax(120px, 0.7fr)) auto', gap: 10, alignItems: 'end' }}>
-              <label>
-                <SmallMuted>Search</SmallMuted>
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search actions or tasks" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }} />
-              </label>
-              <label>
-                <SmallMuted>Phase</SmallMuted>
-                <select value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                  <option value="current">Current phase</option>
-                  <option value="all">All phases</option>
-                  {phaseStates.map((phase: any) => <option key={phase.phase_code} value={phase.phase_code}>{phase.phase_name}</option>)}
-                </select>
-              </label>
-              <label>
-                <SmallMuted>Status</SmallMuted>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
-                  <option value="all">All statuses</option>
-                  <option value="not_started">Not started</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="complete">Complete</option>
-                </select>
-              </label>
-              <label>
-                <SmallMuted>Region</SmallMuted>
-                <input value={regionLabel} readOnly style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginTop: 4, background: '#f9fafb', color: '#6b7280' }} />
-              </label>
-              <button onClick={() => setLaunchCriticalOnly((current) => !current)} style={{ padding: '10px 14px', borderRadius: 8, border: launchCriticalOnly ? '1px solid #fca5a5' : '1px solid #d1d5db', background: launchCriticalOnly ? '#fff7f7' : '#fff', color: launchCriticalOnly ? '#b91c1c' : '#111827', fontWeight: 600 }}>
-                {launchCriticalOnly ? 'Launch critical only' : 'Show all actions'}
-              </button>
-            </div>
-          </Card>
-
-          <Card style={{ borderColor: currentAction?.launch_critical ? '#fecaca' : '#d1fae5', background: currentAction?.launch_critical ? '#fffafa' : '#f9fffb' }}>
+          <Card style={{ background: '#f9fffb', borderColor: currentAction?.launch_critical ? '#fecaca' : '#d1fae5' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <div style={{ maxWidth: 780 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.3 }}>Current action</div>
+              <div style={{ maxWidth: 860 }}>
+                <GroupLabel>Current action</GroupLabel>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 800 }}>{currentAction?.action_title || 'No current action available'}</div>
                   {currentAction?.launch_critical ? <StatusPill label="critical" /> : null}
                   {currentAction ? <StatusPill label={currentAction.status} /> : null}
                 </div>
-                <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6 }}>{currentAction?.action_title || 'No current action available'}</div>
                 <div style={{ marginTop: 8, fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>{currentAction?.objective || 'Kinto will surface the current action here.'}</div>
                 {currentAction ? (
                   <div style={{ marginTop: 12, display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13, color: '#4b5563' }}>
@@ -544,106 +617,118 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
 
           {currentAction ? (
             <Card>
-              <SectionTitle>Tasks for this action</SectionTitle>
-              <SmallMuted>Complete these tasks to move this action forward.</SmallMuted>
+              <SectionTitle>Complete these tasks now</SectionTitle>
+              <SmallMuted>Focus on this action first. Kinto will move the next action up once these tasks are complete.</SmallMuted>
               <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
-                {currentAction.tasks.map((task: any, index: number) => {
+                {currentAction.tasks.map((task: any) => {
                   const linkedDocs = docsByTask.get(task.task_instance_id) || [];
                   const isComposerOpen = showDocComposerForTask === task.task_instance_id;
                   return (
-                    <div key={task.task_code} style={{ border: '1px solid #e5e7eb', borderRadius: 14, padding: 14, background: '#fff' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <div style={{ fontWeight: 700 }}>{index + 1}. {task.task_title} {task.optional ? <span style={{ fontWeight: 600, color: '#6b7280', fontSize: 12 }}>(Optional)</span> : null}</div>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <StatusPill label={task.status} />
-                          <span style={{ fontSize: 12, color: '#6b7280' }}>{linkedDocs.length} file{linkedDocs.length === 1 ? '' : 's'}</span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.35fr repeat(3, minmax(180px, 0.9fr))', gap: 12, marginTop: 12 }}>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Instructions</div>
-                          <div style={{ fontSize: 13, lineHeight: 1.55, color: '#374151' }}>{task.instructions}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Requirements</div>
-                          <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                            {(task.requirements || []).map((item: string) => <li key={item}>{item}</li>)}
-                          </ul>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Where to do this</div>
-                          <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                            {(task.where_to_do_this || []).map((item: string) => <li key={item}>{item}</li>)}
-                          </ul>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Record and save</div>
-                          <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55, fontSize: 13, color: '#374151' }}>
-                            {(task.record_and_save || []).map((item: string) => <li key={item}>{item}</li>)}
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div style={{ marginTop: 14, borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Files</div>
-                          <button onClick={() => setShowDocComposerForTask(isComposerOpen ? null : task.task_instance_id)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12 }}>
-                            {isComposerOpen ? 'Cancel' : 'Add file or link'}
-                          </button>
-                        </div>
-                        {linkedDocs.length ? (
-                          <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
-                            {linkedDocs.map((doc: any) => (
-                              <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                                <div>
-                                  <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
-                                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
-                                </div>
-                                {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : null}
-                              </div>
-                            ))}
-                          </div>
-                        ) : <SmallMuted style={{ marginTop: 8 }}>No files linked to this task yet.</SmallMuted>}
-                        {isComposerOpen ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
-                            <input value={docDraft.name} onChange={(e) => setDocDraft((current) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                            <input value={docDraft.link} onChange={(e) => setDocDraft((current) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                            <button onClick={() => addTaskDocument(task.task_instance_id)} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-                        <button onClick={() => updateTask(task.task_instance_id, 'in_progress')} disabled={saving || !task.task_instance_id || task.status === 'complete'} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Mark started</button>
-                        <button onClick={() => updateTask(task.task_instance_id, 'done')} disabled={saving || !task.task_instance_id} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Mark complete</button>
-                      </div>
-                    </div>
+                    <TaskBlock
+                      key={task.task_code}
+                      task={task}
+                      linkedDocs={linkedDocs}
+                      saving={saving}
+                      onStart={() => updateTask(task.task_instance_id, 'in_progress')}
+                      onComplete={() => updateTask(task.task_instance_id, 'done')}
+                      showComposer={isComposerOpen}
+                      setShowComposer={setShowDocComposerForTask}
+                      docDraft={docDraft}
+                      setDocDraft={setDocDraft}
+                      onSaveDoc={() => addTaskDocument(task.task_instance_id)}
+                    />
                   );
                 })}
               </div>
             </Card>
           ) : null}
 
-          <div style={{ display: 'grid', gap: 12 }}>
-            <SectionTitle>Next actions</SectionTitle>
-            {nextVisibleActions.length ? nextVisibleActions.map((action: any) => (
-              <Card key={action.action_code} style={{ padding: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: 16 }}>
+            <Card>
+              <SectionTitle>Up next</SectionTitle>
+              <SmallMuted>These actions become important after the current one.</SmallMuted>
+              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                {nextVisibleActions.length ? nextVisibleActions.map((action: any) => (
+                  <div key={action.action_code} style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                       <div style={{ fontWeight: 700 }}>{action.action_title}</div>
                       {action.launch_critical ? <StatusPill label="critical" /> : null}
-                      <StatusPill label={action.status} />
                     </div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: '#4b5563' }}>{action.phase_name} • {action.section_name}</div>
-                    <SmallMuted>{action.objective}</SmallMuted>
+                    <SmallMuted style={{ marginTop: 4 }}>{action.objective}</SmallMuted>
+                    <button onClick={() => setOpenAction(action.action_code)} style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Make current action</button>
                   </div>
-                  <button onClick={() => setOpenAction(action.action_code)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Make current action</button>
+                )) : <SmallMuted>No next actions visible yet.</SmallMuted>}
+              </div>
+            </Card>
+
+            <Card>
+              <SectionTitle>Need a different view?</SectionTitle>
+              <SmallMuted>Search and filters are available, but they stay secondary so the main focus remains execution.</SmallMuted>
+              <div style={{ marginTop: 12 }}>
+                <button onClick={() => setShowAdvancedFilters((current) => !current)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>
+                  {showAdvancedFilters ? 'Hide search and filters' : 'Show search and filters'}
+                </button>
+              </div>
+              {showAdvancedFilters ? (
+                <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search actions or tasks" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                    <label>
+                      <SmallMuted>Phase</SmallMuted>
+                      <select value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                        <option value="all">All phases</option>
+                        {phaseStates.map((phase: any) => <option key={phase.phase_code} value={phase.phase_code}>{phase.phase_name}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <SmallMuted>Status</SmallMuted>
+                      <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                        <option value="all">All statuses</option>
+                        <option value="not_started">Not started</option>
+                        <option value="in_progress">In progress</option>
+                        <option value="complete">Complete</option>
+                      </select>
+                    </label>
+                    <button onClick={() => setLaunchCriticalOnly((current) => !current)} style={{ marginTop: 20, padding: '10px 14px', borderRadius: 8, border: launchCriticalOnly ? '1px solid #fca5a5' : '1px solid #d1d5db', background: launchCriticalOnly ? '#fff7f7' : '#fff', color: launchCriticalOnly ? '#b91c1c' : '#111827', fontWeight: 600 }}>
+                      {launchCriticalOnly ? 'Launch critical only' : 'Show all actions'}
+                    </button>
+                  </div>
                 </div>
-              </Card>
-            )) : <Card><SmallMuted>No further actions match these filters right now.</SmallMuted></Card>}
+              ) : null}
+            </Card>
           </div>
+
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div>
+                <SectionTitle>Later actions</SectionTitle>
+                <SmallMuted>Everything else stays collapsed until you need it.</SmallMuted>
+              </div>
+              <button onClick={() => setShowLater((current) => !current)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>
+                {showLater ? 'Hide later actions' : 'Show later actions'}
+              </button>
+            </div>
+            {showLater ? (
+              <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
+                {laterActionsByPhase.length ? laterActionsByPhase.map(([phaseName, actions]: any) => (
+                  <details key={phaseName} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12, background: '#fff' }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{phaseName} ({actions.length})</summary>
+                    <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                      {actions.map((action: any) => (
+                        <div key={action.action_code} style={{ border: '1px solid #f3f4f6', borderRadius: 10, padding: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <div style={{ fontWeight: 700 }}>{action.action_title}</div>
+                            <StatusPill label={action.status === 'complete' ? 'complete' : 'later'} />
+                          </div>
+                          <SmallMuted style={{ marginTop: 4 }}>{action.objective}</SmallMuted>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )) : <SmallMuted>No later actions available right now.</SmallMuted>}
+              </div>
+            ) : null}
+          </Card>
         </div>
       ) : null}
 
@@ -653,7 +738,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
                 <SectionTitle>Document repository</SectionTitle>
-                <SmallMuted>Files and links saved against Business Readiness tasks.</SmallMuted>
+                <SmallMuted>All files and links saved against Business Readiness tasks.</SmallMuted>
               </div>
               <div style={{ minWidth: 280 }}>
                 <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, tasks, or actions" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
