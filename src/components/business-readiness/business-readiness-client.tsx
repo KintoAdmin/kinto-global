@@ -87,6 +87,48 @@ function ProgressBar({ percent }: { percent: number }) {
   );
 }
 
+
+
+function PhaseStrip({ phases, selectedPhaseCode, onSelect }: any) {
+  return (
+    <div style={{ display:'flex', gap: 16, flexWrap:'wrap', alignItems:'center', borderBottom:'1px solid #e5e7eb', paddingBottom: 2 }}>
+      {phases.map((phase: any) => {
+        const active = phase.phase_code === selectedPhaseCode;
+        return (
+          <button
+            key={phase.phase_code}
+            onClick={() => onSelect(phase.phase_code)}
+            style={{
+              background:'none',
+              border:'none',
+              borderBottom: active ? '3px solid #14b8a6' : '3px solid transparent',
+              color: active ? '#0f766e' : '#374151',
+              fontWeight: 700,
+              fontSize: 14,
+              padding:'10px 0 12px',
+              cursor:'pointer',
+              display:'flex',
+              alignItems:'center',
+              gap:8,
+            }}
+          >
+            <span>{phase.phase_name}</span>
+            <span style={{
+              fontSize:12,
+              color:'#6b7280',
+              background:'#f3f4f6',
+              border:'1px solid #e5e7eb',
+              borderRadius:999,
+              padding:'1px 8px',
+              lineHeight:1.5,
+            }}>{phase.completedTasks}/{phase.totalTasks}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function buildDocumentLabel(doc: any) {
   return doc?.note_text || doc?.file_url || doc?.external_link || 'Saved document';
 }
@@ -117,9 +159,9 @@ function TaskRow({
         <td style={{ padding: '10px 12px' }}>
           <TaskStatusSelect value={task.status} onChange={onStatusChange} disabled={saving || previewMode} />
         </td>
-        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{docs.length} file{docs.length === 1 ? '' : 's'}</td>
+        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{docs.length ? `${docs.length} linked` : '—'}</td>
         <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-          <button onClick={onToggle} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer' }}>{expanded ? 'Hide' : 'Open'}</button>
+          <button onClick={onToggle} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>{expanded ? '▲' : '▼'}</button>
         </td>
       </tr>
       {expanded ? (
@@ -149,9 +191,9 @@ function TaskRow({
                 </ul>
               </div>
             </div>
-            <div style={{ marginTop: 16, borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>
+            <div style={{ marginTop: 16, borderTop: '1px solid #e5e7eb', paddingTop: 12, display:'grid', gap:12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>Files for this task</div>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>Files</div>
                 <button onClick={onComposerToggle} disabled={previewMode} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12, opacity: previewMode ? 0.55 : 1 }}>
                   {composerOpen ? 'Cancel' : 'Add file or link'}
                 </button>
@@ -177,6 +219,16 @@ function TaskRow({
                   <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
                 </div>
               ) : null}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Blocker</div>
+                  <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.blocker || '—'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Notes</div>
+                  <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.notes || '—'}</div>
+                </div>
+              </div>
             </div>          </td>
         </tr>
       ) : null}
@@ -186,7 +238,7 @@ function TaskRow({
 
 function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument }: any) {
   return (
-    <Card style={{ borderLeftColor: current ? '#1ABCB0' : '#d1d5db', padding: 0, overflow: 'hidden' }}>
+    <div style={{ background:'#fff', border:`1px solid ${current ? '#99f6e4' : '#e5e7eb'}`, borderLeft:`3px solid ${current ? '#14b8a6' : '#cbd5e1'}`, borderRadius:16, overflow:'hidden' }}>
       <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
@@ -252,7 +304,7 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
           </table>
         </div>
       ) : null}
-    </Card>
+    </div>
   );
 }
 
@@ -701,47 +753,40 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       {activeView === 'execution' ? (
         <div style={{ display: 'grid', gap: 16 }}>
           {currentAction ? (
-            <Card>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#14b8a6' }}>🚀 Business Readiness</span>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>{businessTypeLabel}</span>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>•</span>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>{regionLabel}</span>
-                <StatusPill label={currentAction.status} />
-                {currentAction.launch_critical ? <StatusPill label="critical" /> : null}
-              </div>
-              <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15 }}>{currentAction.action_title}</div>
-              <SmallMuted style={{ marginTop: 8, fontSize: 15 }}>{currentAction.objective}</SmallMuted>
-              <div style={{ marginTop: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
-                  <span>Progress</span>
-                  <span>{currentAction.progress_pct}%</span>
+            <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderLeft:'3px solid #14b8a6', borderRadius:16, overflow:'hidden' }}>
+              <div style={{ padding:'0.85rem 1rem 0' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap', marginBottom:'0.35rem' }}>
+                  <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#14b8a6' }}>🚀 Business Readiness</span>
+                  <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#f3f4f6', border:'1px solid #e5e7eb', color:'#374151', fontWeight:700 }}>{businessTypeLabel}</span>
+                  <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#f3f4f6', border:'1px solid #e5e7eb', color:'#374151', fontWeight:700 }}>{regionLabel}</span>
+                  {currentAction.launch_critical ? <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#fee2e2', border:'1px solid #fecaca', color:'#b91c1c', fontWeight:700 }}>Critical</span> : null}
                 </div>
-                <ProgressBar percent={currentAction.progress_pct} />
+                <h3 style={{ fontWeight:700, fontSize:'1rem', margin:'0 0 0.25rem', lineHeight:1.3 }}>{currentAction.action_title}</h3>
+                <p style={{ fontSize:'0.8rem', color:'#6b7280', margin:'0 0 0.65rem', lineHeight:1.35 }}>{currentAction.objective}</p>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.55rem', flexWrap:'wrap' }}>
+                  <div style={{ flex:1, minWidth:120 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.7rem', color:'#6b7280', marginBottom:'0.2rem' }}><span>Progress</span><span style={{ fontWeight:700 }}>{currentAction.progress_pct}%</span></div>
+                    <div style={{ width:'100%', height:8, background:'#e5e7eb', borderRadius:999, overflow:'hidden' }}><div style={{ width:`${currentAction.progress_pct}%`, height:'100%', background: currentAction.progress_pct < 40 ? '#ef4444' : currentAction.progress_pct < 70 ? '#f59e0b' : '#14b8a6' }} /></div>
+                  </div>
+                  <StatusPill label={currentAction.status} />
+                </div>
+                <button type='button' onClick={() => setOpenAction(openAction ? null : currentAction.action_code)} style={{ background:'none', border:'none', color:'#6b7280', cursor:'pointer', fontWeight:700, marginBottom:'0.6rem' }}>▲ Collapse</button>
               </div>
-            </Card>
+              <div style={{ borderTop:'1px solid #e5e7eb', padding:'0 1rem' }}>
+                <PhaseStrip phases={phaseSummaries} selectedPhaseCode={selectedPhaseCode} onSelect={(code:any) => { setSelectedPhaseCode(code); setOpenAction(null); }} />
+              </div>
+            </div>
           ) : null}
 
-          <Card>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {phaseSummaries.map((phase: any) => (
-                <button key={phase.phase_code} onClick={() => { setSelectedPhaseCode(phase.phase_code); setOpenAction(null); }} style={{ padding: '10px 12px', borderRadius: 10, border: phase.phase_code === selectedPhaseCode ? '1px solid #14b8a6' : '1px solid #e5e7eb', background: phase.phase_code === selectedPhaseCode ? '#ecfeff' : '#fff', textAlign: 'left', minWidth: 170, cursor: 'pointer' }}>
-                  <div style={{ fontWeight: 700, color: '#111827' }}>{phase.phase_name}</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{phase.completedTasks}/{phase.totalTasks} tasks complete</div>
-                </button>
-              ))}
-            </div>
-          </Card>
-
           {(phaseSections || []).map((section: any) => (
-            <Card key={section.section_code} style={{ borderLeftColor: '#cbd5e1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+            <div key={section.section_code} style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:16, overflow:'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12, padding:'14px 16px 0' }}>
                 <div>
                   <GroupLabel>{section.section_name}</GroupLabel>
                   <SmallMuted style={{ marginTop: 4 }}>{section.actions.length} action{section.actions.length === 1 ? '' : 's'} in this section</SmallMuted>
                 </div>
               </div>
-              <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 12, padding:'0 16px 16px' }}>
                 {section.actions.map((action: any) => (
                   <ActionCard
                     key={action.action_code}
@@ -762,7 +807,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                   />
                 ))}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       ) : null}
