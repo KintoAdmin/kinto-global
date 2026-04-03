@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { getAdminClient } from '@/lib/supabase/admin';
 import { nowIso } from '@/lib/utils/ids';
+import { BR_TEMPLATE_VERSION } from '@/lib/business-readiness/catalog';
 
 export async function getBrWorkspaceByAssessment(assessmentId: string) {
   const supabase = getAdminClient();
@@ -68,7 +69,7 @@ export async function createBrWorkspace(input: {
     overall_readiness_state: 'started',
     launch_ready_flag: false,
     active_blocker_count: 0,
-    template_version: 'br-v11-employer-readiness',
+    template_version: BR_TEMPLATE_VERSION,
     created_at: ts,
     updated_at: ts,
   };

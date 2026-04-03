@@ -17,6 +17,7 @@ import {
   getBrBusinessTypeLabel,
   getBrImplementationBlueprint,
   getBrRegionLabel,
+  getBrTaskDocumentExpectations,
 } from '@/lib/business-readiness/catalog';
 import {
   addBrEvidence,
@@ -84,6 +85,7 @@ function buildTaskInstances(workspaceId: string, businessTypeCode: string, regio
       requirements: task.requirements || [],
       where_to_do_this: task.where_to_do_this || [],
       record_and_save: task.record_and_save || [],
+      expected_files: getBrTaskDocumentExpectations(task.code),
       optional: Boolean(task.optional),
     },
     created_at: nowIso(),
@@ -148,6 +150,7 @@ function buildActionSummaries(workspace: any, bundle: any) {
           requirements: task.requirements || [],
           where_to_do_this: task.where_to_do_this || [],
           record_and_save: task.record_and_save || [],
+          expected_files: getBrTaskDocumentExpectations(task.task_code),
           optional: Boolean(task.optional),
           status: taskRow?.status || 'not_started',
           task_instance_id: taskRow?.task_instance_id || '',
@@ -304,6 +307,7 @@ function buildImplementationPlanForInput(input: { businessTypeCode?: string | nu
             requirements: task.requirements || [],
             where_to_do_this: task.where_to_do_this || [],
             record_and_save: task.record_and_save || [],
+            expected_files: getBrTaskDocumentExpectations(task.task_code),
             optional: Boolean(task.optional),
             status: taskRow?.status || 'not_started',
             task_instance_id: taskRow?.task_instance_id || `preview::${task.task_code}`,
