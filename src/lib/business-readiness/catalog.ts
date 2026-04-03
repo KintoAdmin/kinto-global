@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const BR_TEMPLATE_VERSION = 'br-v9-uae-content';
+export const BR_TEMPLATE_VERSION = 'br-v10-playbook-overlays';
 
 export const BR_BUSINESS_TYPES = [
   { code: 'retail_shop', label: 'Retail / Shop' },
@@ -734,15 +734,144 @@ function applyRegionText(task, regionCode) {
   return task;
 }
 
+function applyBusinessTypeText(task, businessTypeCode) {
+  if (businessTypeCode === 'professional_services') {
+    if (task.task_code === 't02_set_launch_pricing') {
+      return {
+        ...task,
+        instructions: 'Set the pricing the business will use for consulting or service work at launch. Make sure the price is clear enough to use in a quote, proposal, or rate card and simple enough to explain to a client without reworking it every time.',
+        requirements: ['launch offer', 'price basis', 'expected payment timing', 'whether the work is project-based, retainer-based, hourly, or package-based'],
+        where_to_do_this: ['pricing worksheet', 'proposal template', 'quote template or rate card'],
+        record_and_save: ['final launch pricing', 'consulting rate card or package sheet', 'pricing notes', 'save in the Sales Setup folder'],
+      };
+    }
+    if (task.task_code === 't03_set_payment_terms') {
+      return {
+        ...task,
+        instructions: 'Set the payment terms the business will use when dealing with clients. Be clear on whether you require a deposit, when invoices are issued, when payment is due, and what happens if work changes or payment is late.',
+        requirements: ['launch pricing', 'payment method', 'sales model', 'decision on deposit or milestone billing if relevant'],
+        where_to_do_this: ['invoice template', 'proposal template', 'engagement letter or terms note'],
+        record_and_save: ['payment terms', 'deposit rule if applicable', 'late payment rule', 'client payment instructions', 'save in the Sales Setup folder'],
+      };
+    }
+    if (task.task_code === 't01_set_enquiry_channel') {
+      return {
+        ...task,
+        instructions: 'Choose the channels clients will use to contact the business at launch. For consulting or service work, keep this tight and make sure someone is clearly responsible for responding to enquiries quickly and professionally.',
+        requirements: ['target customer', 'communication channels', 'owner or sales contact'],
+        where_to_do_this: ['business email', 'business phone number', 'LinkedIn, website form, or WhatsApp Business if relevant'],
+        record_and_save: ['enquiry channels', 'response contact details', 'response owner', 'save in the Sales Admin folder'],
+      };
+    }
+    if (task.task_code === 't02_set_offer_presentation_method') {
+      return {
+        ...task,
+        instructions: 'Decide how the service offer will be presented to clients. For consulting or professional services, this should usually be through a proposal, quote, service sheet, or rate card that can be used consistently.',
+        requirements: ['launch offer', 'launch pricing', 'customer contact process'],
+        where_to_do_this: ['proposal template', 'quote template', 'service sheet or rate card'],
+        record_and_save: ['final offer presentation method', 'template used', 'save in the Sales Admin folder'],
+      };
+    }
+    if (task.task_code === 't03_set_customer_acceptance_step') {
+      return {
+        ...task,
+        instructions: 'Define what counts as a client saying yes before work starts. For consulting or service work, this should usually be a signed proposal, approved quote, engagement email, or other clear written acceptance.',
+        requirements: ['offer presentation method', 'payment terms', 'chosen sales process'],
+        where_to_do_this: ['proposal approval process', 'quote acceptance step', 'engagement email or signed instruction'],
+        record_and_save: ['acceptance method', 'client acceptance rule', 'template or process used', 'save in the Sales Admin folder'],
+      };
+    }
+    if (task.task_code === 't04_set_payment_trigger') {
+      return {
+        ...task,
+        instructions: 'Define exactly when the client is invoiced or asked for payment. Set this before launch so the business does not improvise payment timing client by client.',
+        requirements: ['payment terms', 'customer acceptance step', 'launch pricing'],
+        where_to_do_this: ['invoice template', 'proposal template', 'sales process note'],
+        record_and_save: ['payment trigger point', 'invoice timing rule', 'save in the Sales Admin folder'],
+      };
+    }
+    if (task.task_code === 't01_list_delivery_steps') {
+      return {
+        ...task,
+        instructions: 'Write down the steps the business will follow from accepted client work to completed delivery. For consulting or service work, this usually includes onboarding, discovery, delivery, review, signoff, and closeout.',
+        requirements: ['launch offer', 'customer acceptance method', 'service delivery model'],
+        where_to_do_this: ['process note', 'workflow checklist', 'operations document'],
+        record_and_save: ['delivery step list', 'service workflow draft', 'save in the Operations Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_set_completion_point') {
+      return {
+        ...task,
+        instructions: 'Define when the client work is considered complete. For consulting or professional services, this should be linked to a clear delivery outcome, review point, or signoff step so there is no confusion later.',
+        requirements: ['delivery workflow', 'offer scope', 'client expectation'],
+        where_to_do_this: ['workflow checklist', 'closeout note', 'signoff template if relevant'],
+        record_and_save: ['completion standard', 'signoff rule if applicable', 'save in the Operations Setup folder'],
+      };
+    }
+    if (task.task_code === 't03_set_issue_handling_rule') {
+      return {
+        ...task,
+        instructions: 'Decide how the business will handle client issues, complaints, rework, or changes in scope. For consulting or service work, this should be clear before launch so delivery problems do not turn into commercial problems later.',
+        requirements: ['delivery workflow', 'completion point', 'customer contact process'],
+        where_to_do_this: ['issue handling note', 'revision or scope-change rule', 'client support or escalation channel'],
+        record_and_save: ['issue handling rule', 'scope-change rule if applicable', 'save in the Operations Setup folder'],
+      };
+    }
+  }
+  if (businessTypeCode === 'retail_shop') {
+    if (task.task_code === 't02_set_payment_method_launch') {
+      return {
+        ...task,
+        instructions: 'Decide how customers will pay the shop when trading begins. Keep this practical for retail trading. At launch, this usually means cash, card, EFT, or a simple POS route only if needed.',
+        requirements: ['active business bank account', 'customer payment method', 'POS decision if relevant', 'refund rule if relevant'],
+        where_to_do_this: ['business bank account', 'card/POS provider if needed', 'cash-handling note'],
+        record_and_save: ['chosen payment methods', 'POS details if applicable', 'customer payment instructions', 'save in the Sales Admin or Finance folder'],
+      };
+    }
+    if (task.task_code === 't01_list_delivery_steps') {
+      return {
+        ...task,
+        instructions: 'Write down the basic operating flow for the shop from opening to sale to closing. Include how stock is received, how sales happen, and what must be checked at the end of the day.',
+        requirements: ['launch offer', 'payment method', 'shop operating model'],
+        where_to_do_this: ['shop operations checklist', 'opening and closing note', 'store process document'],
+        record_and_save: ['shop workflow', 'opening routine', 'closing routine', 'save in the Operations Setup folder'],
+      };
+    }
+  }
+  if (businessTypeCode === 'software_saas') {
+    if (task.task_code === 't02_set_offer_presentation_method') {
+      return {
+        ...task,
+        instructions: 'Decide how the product or service will be presented to users at launch. For software or SaaS, this may be a pricing page, demo deck, onboarding email, or short product sheet that explains the offer clearly.',
+        requirements: ['launch offer', 'launch pricing', 'customer contact process'],
+        where_to_do_this: ['pricing page draft', 'product sheet', 'demo or onboarding material'],
+        record_and_save: ['final presentation method', 'pricing page or product sheet', 'save in the Sales Admin folder'],
+      };
+    }
+    if (task.task_code === 't01_list_delivery_steps') {
+      return {
+        ...task,
+        instructions: 'Write down the steps from sign-up or sale to first value for the user. For software or SaaS, this should include onboarding, activation, support handoff, and what happens if the user gets stuck.',
+        requirements: ['launch offer', 'customer acceptance method', 'software delivery model'],
+        where_to_do_this: ['onboarding checklist', 'activation workflow', 'operations document'],
+        record_and_save: ['delivery step list', 'onboarding workflow', 'save in the Operations Setup folder'],
+      };
+    }
+  }
+  return task;
+}
+
+
 export function getBrImplementationBlueprint(input?: { businessTypeCode?: string | null; regionCode?: string | null }) {
   const regionCode = input?.regionCode || '';
+  const businessTypeCode = input?.businessTypeCode || '';
   return COMMON_STRUCTURE.map((phase) => ({
     ...phase,
     sections: phase.sections.map((section) => ({
       ...section,
       actions: section.actions.map((action) => ({
         ...action,
-        tasks: action.tasks.map((task) => applyRegionText(task, regionCode)),
+        tasks: action.tasks.map((task) => applyBusinessTypeText(applyRegionText(task, regionCode), businessTypeCode)),
       })),
     })),
   }));

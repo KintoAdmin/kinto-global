@@ -67,7 +67,7 @@ export async function createBrWorkspace(input: {
     overall_readiness_state: 'started',
     launch_ready_flag: false,
     active_blocker_count: 0,
-    template_version: 'br-v9-uae-content',
+    template_version: 'br-v10-playbook-overlays',
     created_at: ts,
     updated_at: ts,
   };
