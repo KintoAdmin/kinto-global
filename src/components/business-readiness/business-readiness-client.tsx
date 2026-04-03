@@ -2,6 +2,7 @@
 // @ts-nocheck
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type Props = { assessmentId?: string | null; initialData?: any; view?: string };
 
@@ -191,6 +192,11 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   const [showDocComposerForTask, setShowDocComposerForTask] = useState<string | null>(null);
   const [docDraft, setDocDraft] = useState({ name: '', link: '' });
   const [documentSearch, setDocumentSearch] = useState('');
+  const [documentPhaseFilter, setDocumentPhaseFilter] = useState<'all' | string>('all');
+  const [documentTypeFilter, setDocumentTypeFilter] = useState<'all' | string>('all');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   async function load() {
     if (!assessmentId) return;
@@ -310,6 +316,20 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     }
   }
 
+  function pushView(viewName: string, actionCode?: string | null) {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('view', viewName);
+    if (assessmentId) params.set('assessmentId', assessmentId);
+    if (actionCode) params.set('action', actionCode); else params.delete('action');
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function openActionInExecution(actionCode?: string | null) {
+    if (!actionCode) return;
+    setOpenAction(actionCode);
+    pushView('execution', actionCode);
+  }
+
   const workspace = data?.workspace || null;
   const profile = data?.profile || null;
   const phaseStates = data?.phaseStates || [];
@@ -364,6 +384,11 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     if (!openAction && suggestedActionCode) setOpenAction(suggestedActionCode);
   }, [suggestedActionCode]);
 
+  useEffect(() => {
+    const actionFromQuery = searchParams?.get('action');
+    if (actionFromQuery) setOpenAction(actionFromQuery);
+  }, [searchParams]);
+
   const currentActionCode = openAction || suggestedActionCode;
   const currentAction = flatActions.find((row: any) => row.action_code === currentActionCode) || null;
 
@@ -404,22 +429,38 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
           label: buildDocumentLabel(doc),
           task_title: ctx.task?.task_title || 'Unlinked task',
           action_title: ctx.action?.action_title || 'Unlinked action',
+          action_code: ctx.action?.action_code || null,
           section_name: ctx.section_name || '—',
           phase_name: ctx.phase_name || '—',
+          phase_code: ctx.phase_code || 'unknown',
         };
       })
       .filter((doc: any) => {
+        if (documentPhaseFilter !== 'all' && doc.phase_code !== documentPhaseFilter) return false;
+        if (documentTypeFilter !== 'all' && doc.evidence_type !== documentTypeFilter) return false;
         if (!needle) return true;
         const hay = [doc.label, doc.task_title, doc.action_title, doc.section_name, doc.phase_name].join(' ').toLowerCase();
         return hay.includes(needle);
       });
-  }, [evidence, taskContextByInstance, documentSearch]);
+  }, [evidence, taskContextByInstance, documentSearch, documentPhaseFilter, documentTypeFilter]);
 
   const completionSummary = useMemo(() => {
     const total = flatActions.length;
     const done = flatActions.filter((row: any) => row.status === 'complete').length;
     return { total, done };
   }, [flatActions]);
+
+  const documentSummary = useMemo(() => {
+    const total = documentRows.length;
+    const linkedTasks = new Set(documentRows.map((doc: any) => doc.task_instance_id)).size;
+    const latest = documentRows
+      .map((doc: any) => new Date(doc.uploaded_at).getTime())
+      .filter((value: number) => Number.isFinite(value))
+      .sort((a: number, b: number) => b - a)[0];
+    return { total, linkedTasks, latest: latest ? new Date(latest).toLocaleDateString() : '—' };
+  }, [documentRows]);
+
+  const documentTypes = useMemo(() => Array.from(new Set((evidence || []).map((doc: any) => doc.evidence_type).filter(Boolean))), [evidence]);
 
   if (loading) return <div style={{ padding: 16 }}>Loading Business Readiness…</div>;
   if (!assessmentId) return <Card>No assessment selected yet.</Card>;
@@ -662,7 +703,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                       {action.launch_critical ? <StatusPill label="critical" /> : null}
                     </div>
                     <SmallMuted style={{ marginTop: 4 }}>{action.objective}</SmallMuted>
-                    <button onClick={() => setOpenAction(action.action_code)} style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Make current action</button>
+                    <button onClick={() => openActionInExecution(action.action_code)} style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Make current action</button>
                   </div>
                 )) : <SmallMuted>No next actions visible yet.</SmallMuted>}
               </div>
@@ -742,14 +783,49 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
       {activeView === 'documents' ? (
         <div style={{ display: 'grid', gap: 16 }}>
           <Card>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              <Card style={{ padding: 14 }}>
+                <SmallMuted>Total documents</SmallMuted>
+                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentSummary.total}</div>
+              </Card>
+              <Card style={{ padding: 14 }}>
+                <SmallMuted>Linked tasks</SmallMuted>
+                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentSummary.linkedTasks}</div>
+              </Card>
+              <Card style={{ padding: 14 }}>
+                <SmallMuted>Latest saved</SmallMuted>
+                <div style={{ fontSize: 18, fontWeight: 800, marginTop: 8 }}>{documentSummary.latest}</div>
+              </Card>
+              <Card style={{ padding: 14 }}>
+                <SmallMuted>Current phase files</SmallMuted>
+                <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{documentRows.filter((doc: any) => doc.phase_code === workspace?.current_phase_code).length}</div>
+              </Card>
+            </div>
+          </Card>
+
+          <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
                 <SectionTitle>Document repository</SectionTitle>
-                <SmallMuted>All files and links saved against Business Readiness tasks.</SmallMuted>
+                <SmallMuted>Files and links saved against Business Readiness tasks. Filter them by phase or type, then jump back into the related work.</SmallMuted>
               </div>
-              <div style={{ minWidth: 280 }}>
-                <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, tasks, or actions" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) repeat(2, minmax(160px, 0.55fr))', gap: 10, marginTop: 14 }}>
+              <input value={documentSearch} onChange={(e) => setDocumentSearch(e.target.value)} placeholder="Search documents, tasks, or actions" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+              <label>
+                <SmallMuted>Phase</SmallMuted>
+                <select value={documentPhaseFilter} onChange={(e) => setDocumentPhaseFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                  <option value="all">All phases</option>
+                  {phaseStates.map((phase: any) => <option key={phase.phase_code} value={phase.phase_code}>{phase.phase_name}</option>)}
+                </select>
+              </label>
+              <label>
+                <SmallMuted>Type</SmallMuted>
+                <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', marginTop: 4 }}>
+                  <option value="all">All document types</option>
+                  {documentTypes.map((type: any) => <option key={String(type)} value={String(type)}>{sentenceCase(String(type))}</option>)}
+                </select>
+              </label>
             </div>
           </Card>
 
@@ -757,7 +833,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
             <div style={{ display: 'grid', gap: 12 }}>
               {documentRows.map((doc: any) => (
                 <Card key={doc.evidence_id} style={{ padding: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) repeat(4, minmax(120px, 0.65fr)) auto', gap: 12, alignItems: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1.1fr) repeat(4, minmax(120px, 0.6fr)) auto', gap: 12, alignItems: 'center' }}>
                     <div>
                       <div style={{ fontWeight: 700 }}>{doc.label}</div>
                       <div style={{ marginTop: 4, fontSize: 13, color: '#4b5563' }}>{doc.action_title}</div>
@@ -779,8 +855,9 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                       <div style={{ fontSize: 12, color: '#6b7280' }}>Saved</div>
                       <div style={{ fontWeight: 600, marginTop: 4 }}>{new Date(doc.uploaded_at).toLocaleDateString()}</div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
                       {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
+                      {doc.action_code ? <button onClick={() => openActionInExecution(doc.action_code)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12 }}>Open task</button> : null}
                     </div>
                   </div>
                 </Card>
@@ -788,7 +865,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
             </div>
           ) : (
             <Card>
-              <SmallMuted>No documents saved yet. Add files or links from a task inside Execution.</SmallMuted>
+              <SmallMuted>No documents match this view yet. Add files or links from a task inside Execution.</SmallMuted>
             </Card>
           )}
         </div>
