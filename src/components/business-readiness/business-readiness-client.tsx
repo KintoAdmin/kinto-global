@@ -21,6 +21,41 @@ function statusTone(status?: string | null) {
   return { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
 }
 
+const taskStatusOptions = [
+  { value: 'not_started', label: 'Not Started' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'waiting', label: 'Awaiting Inputs' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'done', label: 'Complete' },
+];
+
+function TaskStatusSelect({ value, onChange, disabled }: { value?: string | null; onChange: (value: string) => void; disabled?: boolean }) {
+  const tone = statusTone(value);
+  return (
+    <select
+      value={value || 'not_started'}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      style={{
+        minWidth: 150,
+        padding: '7px 12px',
+        borderRadius: 999,
+        border: `2px solid ${tone.border}`,
+        background: tone.bg,
+        color: tone.color,
+        fontWeight: 700,
+        fontSize: 13,
+        outline: 'none',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      {taskStatusOptions.map((option) => (
+        <option key={option.value} value={option.value}>{option.label}</option>
+      ))}
+    </select>
+  );
+}
+
 function Card({ children, style }: any) {
   return <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderLeft: '3px solid #14b8a6', borderRadius: 16, padding: 16, ...style }}>{children}</div>;
 }
@@ -65,8 +100,7 @@ function TaskRow({
   docs,
   expanded,
   onToggle,
-  onStart,
-  onComplete,
+  onStatusChange,
   saving,
   previewMode,
   composerOpen,
@@ -80,7 +114,9 @@ function TaskRow({
       <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
         <td style={{ padding: '10px 12px', fontWeight: 600, width: '42%' }}>{task.task_title}</td>
         <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{task.optional ? 'Optional' : 'Required'}</td>
-        <td style={{ padding: '10px 12px' }}><StatusPill label={task.status} /></td>
+        <td style={{ padding: '10px 12px' }}>
+          <TaskStatusSelect value={task.status} onChange={onStatusChange} disabled={saving || previewMode} />
+        </td>
         <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{docs.length} file{docs.length === 1 ? '' : 's'}</td>
         <td style={{ padding: '10px 12px', textAlign: 'right' }}>
           <button onClick={onToggle} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer' }}>{expanded ? 'Hide' : 'Open'}</button>
@@ -141,19 +177,14 @@ function TaskRow({
                   <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
                 </div>
               ) : null}
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={onStart} disabled={saving || previewMode || task.status === 'done'} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, opacity: previewMode ? 0.55 : 1 }}>Mark started</button>
-              <button onClick={onComplete} disabled={saving || previewMode} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600, opacity: previewMode ? 0.55 : 1 }}>Mark complete</button>
-            </div>
-          </td>
+            </div>          </td>
         </tr>
       ) : null}
     </>
   );
 }
 
-function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStartTask, onCompleteTask, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument }: any) {
+function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument }: any) {
   return (
     <Card style={{ borderLeftColor: current ? '#1ABCB0' : '#d1d5db', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: 16 }}>
@@ -206,8 +237,7 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
                     docs={docs}
                     expanded={expanded}
                     onToggle={() => setExpandedTaskId(expanded ? null : task.task_instance_id)}
-                    onStart={() => onStartTask(task.task_instance_id)}
-                    onComplete={() => onCompleteTask(task.task_instance_id)}
+                    onStatusChange={(status: string) => onStatusChange(task.task_instance_id, status)}
                     saving={saving}
                     previewMode={previewMode}
                     composerOpen={composerOpen}
@@ -721,8 +751,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                     expandedTaskId={expandedTaskId}
                     setExpandedTaskId={setExpandedTaskId}
                     onOpen={() => setOpenAction(currentAction?.action_code === action.action_code ? null : action.action_code)}
-                    onStartTask={(taskInstanceId: string) => updateTask(taskInstanceId, 'in_progress')}
-                    onCompleteTask={(taskInstanceId: string) => updateTask(taskInstanceId, 'done')}
+                    onStatusChange={(taskInstanceId: string, status: string) => updateTask(taskInstanceId, status)}
                     saving={saving}
                     previewMode={previewMode}
                     showDocComposerForTask={showDocComposerForTask}
