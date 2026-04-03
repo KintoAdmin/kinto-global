@@ -137,6 +137,7 @@ function linkedDocsForTask(docsByTask: Map<string, any[]>, taskId?: string | nul
   return docsByTask.get(taskId || '') || [];
 }
 
+
 function TaskRow({
   task,
   docs,
@@ -151,23 +152,27 @@ function TaskRow({
   setDocDraft,
   onSaveDoc,
 }: any) {
+  const blockerText = task.blocker || '—';
+  const complete = String(task.status || '') === 'done';
   return (
     <>
-      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-        <td style={{ padding: '10px 12px', fontWeight: 600, width: '42%' }}>{task.task_title}</td>
+      <tr style={{ borderBottom: '1px solid #e5e7eb', background: expanded ? '#f8fafc' : '#fff' }}>
+        <td style={{ padding: '10px 12px', fontWeight: 600, width: '38%', textDecoration: complete ? 'line-through' : 'none', color: complete ? '#6b7280' : '#111827' }}>{task.task_title}</td>
         <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{task.optional ? 'Optional' : 'Required'}</td>
+        <td style={{ padding: '10px 12px', fontSize: 13, color: '#111827', fontWeight: 700 }}>{task.sort_order}</td>
         <td style={{ padding: '10px 12px' }}>
           <TaskStatusSelect value={task.status} onChange={onStatusChange} disabled={saving || previewMode} />
         </td>
         <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{docs.length ? `${docs.length} linked` : '—'}</td>
-        <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <span style={{ marginRight: 10 }}>{blockerText}</span>
           <button onClick={onToggle} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>{expanded ? '▲' : '▼'}</button>
         </td>
       </tr>
       {expanded ? (
         <tr style={{ background: '#f8fafc' }}>
-          <td colSpan={5} style={{ padding: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: 14 }}>
+          <td colSpan={6} style={{ padding: 16, borderTop: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Instructions</div>
                 <div style={{ fontSize: 13, lineHeight: 1.55, color: '#374151' }}>{task.instructions}</div>
@@ -191,45 +196,54 @@ function TaskRow({
                 </ul>
               </div>
             </div>
-            <div style={{ marginTop: 16, borderTop: '1px solid #e5e7eb', paddingTop: 12, display:'grid', gap:12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>Files</div>
-                <button onClick={onComposerToggle} disabled={previewMode} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12, opacity: previewMode ? 0.55 : 1 }}>
-                  {composerOpen ? 'Cancel' : 'Add file or link'}
-                </button>
-              </div>
-              {previewMode ? <SmallMuted style={{ marginTop: 6 }}>Preview mode is on. Switch back to the workspace region and business type to update task status or save files.</SmallMuted> : null}
-              {docs.length ? (
-                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
-                  {docs.map((doc: any) => (
-                    <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
-                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
-                      </div>
-                      {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
+            <div style={{ marginTop: 16, borderTop: '1px solid #e5e7eb', paddingTop: 12, display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Files</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+                    <SmallMuted>{docs.length ? `${docs.length} file${docs.length === 1 ? '' : 's'} linked to this task` : 'No files linked yet.'}</SmallMuted>
+                    <button onClick={onComposerToggle} disabled={previewMode} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600, fontSize: 12, opacity: previewMode ? 0.55 : 1 }}>
+                      {composerOpen ? 'Cancel' : 'Add file or link'}
+                    </button>
+                  </div>
+                  {docs.length ? (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {docs.map((doc: any) => (
+                        <div key={doc.evidence_id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', background:'#fff' }}>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 13 }}>{buildDocumentLabel(doc)}</div>
+                            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{sentenceCase(doc.evidence_type)} • {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+                          </div>
+                          {doc.external_link ? <a href={doc.external_link} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700 }}>Open</a> : <StatusPill label={doc.review_status || 'saved'} />}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : <SmallMuted style={{ marginTop: 8 }}>No files linked yet.</SmallMuted>}
-              {composerOpen && !previewMode ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
-                  <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                  <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
-                  <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
-                </div>
-              ) : null}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Blocker</div>
-                  <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.blocker || '—'}</div>
+                  ) : null}
+                  {composerOpen && !previewMode ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
+                      <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                      <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
+                      <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
+                    </div>
+                  ) : null}
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Notes</div>
-                  <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.notes || '—'}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Execution detail</div>
+                  <div style={{ display:'grid', gap:12 }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Blocker</div>
+                      <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.blocker || 'No blocker recorded.'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Notes</div>
+                      <div style={{ padding:10, minHeight:44, border:'1px solid #d1d5db', borderRadius:8, background:'#fff', fontSize:13, color:'#374151' }}>{task.notes || 'No notes recorded yet.'}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>          </td>
+              {previewMode ? <SmallMuted>Preview mode is on. Switch back to the workspace region and business type to update task status or save files.</SmallMuted> : null}
+            </div>
+          </td>
         </tr>
       ) : null}
     </>
@@ -240,41 +254,44 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
   return (
     <div style={{ background:'#fff', border:`1px solid ${current ? '#99f6e4' : '#e5e7eb'}`, borderLeft:`3px solid ${current ? '#14b8a6' : '#cbd5e1'}`, borderRadius:16, overflow:'hidden' }}>
       <div style={{ padding: 16 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'0.45rem', flexWrap:'wrap', marginBottom:'0.4rem' }}>
+          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#14b8a6' }}>🧭 Business Readiness</span>
+          <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#f3f4f6', border:'1px solid #e5e7eb', color:'#374151', fontWeight:700 }}>{action.section_name}</span>
+          {action.launch_critical ? <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#fee2e2', border:'1px solid #fecaca', color:'#b91c1c', fontWeight:700 }}>Critical</span> : null}
+          {current ? <span style={{ fontSize:'0.65rem', padding:'0.12rem 0.4rem', borderRadius:999, background:'#ecfeff', border:'1px solid #99f6e4', color:'#0f766e', fontWeight:700 }}>Current</span> : null}
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>{action.action_title}</div>
-              {action.launch_critical ? <StatusPill label="critical" /> : null}
-              {current ? <StatusPill label="current" /> : null}
-            </div>
+          <div style={{ flex:1, minWidth:260 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, lineHeight:1.25 }}>{action.action_title}</div>
             <SmallMuted style={{ marginTop: 6 }}>{action.objective}</SmallMuted>
           </div>
-          <div style={{ display: 'grid', justifyItems: 'end', gap: 8, minWidth: 180 }}>
-            <StatusPill label={action.status} />
-            <div style={{ fontSize: 12, color: '#6b7280' }}>{action.completed_tasks}/{action.total_tasks} tasks complete</div>
-            <button onClick={onOpen} style={{ border: '1px solid #d1d5db', background: '#fff', borderRadius: 8, padding: '8px 12px', fontWeight: 700 }}>{current ? 'Hide action' : 'Open action'}</button>
+          <div style={{ display: 'grid', justifyItems: 'end', gap: 8, minWidth: 190 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              <StatusPill label={action.status} />
+              <span style={{ fontSize:12, color:'#6b7280' }}>{action.completed_tasks}/{action.total_tasks} tasks</span>
+            </div>
+            <button onClick={onOpen} style={{ border: 'none', background: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>{current ? '▲ Collapse' : '▼ Open action'}</button>
           </div>
         </div>
-        <div style={{ marginTop: 12 }}>
-          <ProgressBar percent={action.progress_pct} />
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:12, flexWrap:'wrap' }}>
+          <div style={{ flex:1, minWidth:180 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, color:'#6b7280', marginBottom:4 }}><span>Progress</span><span style={{ fontWeight:700 }}>{action.progress_pct}%</span></div>
+            <ProgressBar percent={action.progress_pct} />
+          </div>
+          <SmallMuted>{action.next_task_name ? `Start with: ${action.next_task_name}` : 'All tasks complete.'}</SmallMuted>
         </div>
       </div>
       {current ? (
         <div style={{ borderTop: '1px solid #e5e7eb', background: '#fff' }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Definition of done</div>
-            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6, fontSize: 13, color: '#374151' }}>
-              {(action.tasks || []).filter((task: any) => !task.optional).map((task: any) => <li key={task.task_code}>{task.task_title}</li>)}
-            </ul>
-          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
                 <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Task</th>
                 <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Type</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>P</th>
                 <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Status</th>
                 <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>Files</th>
-                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280', textAlign: 'right' }}>Open</th>
+                <th style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280', textAlign:'right' }}>Blocker</th>
               </tr>
             </thead>
             <tbody>
@@ -302,6 +319,21 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
               })}
             </tbody>
           </table>
+          <div style={{ borderTop:'1px solid #e5e7eb', padding:'14px 16px', display:'grid', gap:12 }}>
+            <div>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Definition of done</div>
+              <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.6, fontSize: 13, color: '#374151' }}>
+                {(action.tasks || []).filter((task: any) => !task.optional).map((task: any) => <li key={task.task_code}>{task.task_title}</li>)}
+              </ul>
+            </div>
+            <div>
+              <div style={{ fontWeight:700, marginBottom:6 }}>Execution notes</div>
+              <div style={{ padding:12, border:'1px solid #d1d5db', borderRadius:10, background:'#fff', fontSize:13, color:'#6b7280' }}>Use the task rows above to record progress, blockers, files, and save points for this action.</div>
+            </div>
+            <div style={{ padding:'12px 14px', borderRadius:10, background:'#eff6ff', border:'1px solid #bfdbfe', fontSize:13, color:'#1d4ed8' }}>
+              💡 Next checkpoint: {action.next_task_name ? `Complete “${action.next_task_name}” to move this action forward.` : 'This action is complete and ready for the next step.'}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
