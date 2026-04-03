@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const BR_TEMPLATE_VERSION = 'br-v8-south-africa-content';
+export const BR_TEMPLATE_VERSION = 'br-v9-uae-content';
 
 export const BR_BUSINESS_TYPES = [
   { code: 'retail_shop', label: 'Retail / Shop' },
@@ -493,6 +493,125 @@ export function getBrDomain(code?: string | null) {
 }
 
 function applyRegionText(task, regionCode) {
+  if (regionCode === 'uae') {
+    if (task.task_code === 't01_confirm_legal_structure') {
+      return {
+        ...task,
+        instructions: 'Decide the legal structure and operating path before registration begins. In the UAE, first confirm whether the business will operate on the mainland or in a free zone, because that changes the registration and licensing route.',
+        requirements: ['owner or founder details', 'chosen business activity', 'mainland or free zone decision', 'UAE passport or ID details where applicable'],
+        where_to_do_this: ['UAE official business setup guidance', 'relevant free zone authority if applicable', 'setup notes document'],
+        record_and_save: ['chosen legal structure', 'mainland or free zone decision', 'save in the Business Setup folder'],
+      };
+    }
+    if (task.task_code === 't01_confirm_registration_route') {
+      return {
+        ...task,
+        instructions: 'First confirm whether the business will operate on the mainland or in a free zone. Then match the chosen business activity and legal structure to the correct registration and licensing route. Do not start the application until this is clear.',
+        requirements: ['chosen business structure', 'chosen business activity', 'owner details', 'mainland or free zone decision', 'confirmation that the business will operate in the UAE'],
+        where_to_do_this: ['UAE official business guidance', 'relevant mainland or free zone authority', 'setup notes or checklist'],
+        record_and_save: ['confirmed registration route', 'licensing route note', 'save in the Business Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_complete_registration_process') {
+      return {
+        ...task,
+        instructions: 'Complete the licence and registration process using the correct trade name, business activity, owner details, and contact information. Make sure the same details are used consistently throughout the application.',
+        requirements: ['trade name', 'business activity', 'owner or shareholder details', 'contact details', 'office or address details where required', 'payment method if fees apply'],
+        where_to_do_this: ['relevant mainland authority or free zone authority', 'internet access', 'scanned documents or clear copies if needed'],
+        record_and_save: ['licence or registration confirmation', 'trade licence details', 'proof of submission', 'save in the Business Setup folder and cloud backup'],
+      };
+    }
+    if (task.task_code === 't03_save_registration_tax_details') {
+      return {
+        ...task,
+        instructions: 'Once registration is complete, save the licence, registration details, and tax administration details together in one place. These details will be needed later for banking, invoicing, tax, and compliance.',
+        requirements: ['official business name', 'licence or registration number', 'registration date', 'FTA access details if applicable'],
+        where_to_do_this: ['secure cloud storage', 'password manager', 'FTA / EmaraTax account if applicable'],
+        record_and_save: ['licence or registration proof', 'registration number', 'corporate tax registration details if applicable', 'VAT registration details if applicable', 'save in the Business Setup and Tax folders'],
+      };
+    }
+    if (task.task_code === 't01_open_business_account') {
+      return {
+        ...task,
+        instructions: 'Open the business bank account the company will use for all business income and business expenses before trading begins. Use the official licence and registration details when applying and confirm the account is active before launch.',
+        requirements: ['passport or Emirates ID where applicable', 'phone number', 'email address', 'licence or registration number', 'registration or licence documents', 'proof of address if required by the bank', 'owner or authorised signatory details'],
+        where_to_do_this: ['bank business account application portal or branch', 'scanned or photographed documents', 'phone and email for verification'],
+        record_and_save: ['bank name', 'account type', 'account opening confirmation', 'account details for invoices', 'save in the Banking or Finance Setup folder'],
+      };
+    }
+    if (task.task_code === 't02_set_payment_method_launch') {
+      return {
+        ...task,
+        instructions: 'Decide how customers will pay the business when trading begins. Keep this simple. For many UAE service businesses, invoice and bank transfer are enough at launch. Only add a payment gateway or card collection if it is needed immediately.',
+        requirements: ['active business bank account', 'clear customer payment method', 'invoice template', 'payment terms'],
+        where_to_do_this: ['invoicing template or invoicing software', 'business bank account', 'optional payment platform if needed'],
+        record_and_save: ['chosen payment method', 'invoice template', 'payment terms', 'customer payment instructions', 'save in the Sales Admin or Finance folder'],
+      };
+    }
+    if (task.task_code === 't03_separate_business_money') {
+      return {
+        ...task,
+        instructions: 'Use the business bank account for all business income and business expenses from the first day of trading. Do not run customer payments or business costs through a personal account once the business is operating.',
+        requirements: ['active business bank account', 'bookkeeping method', 'clear rule for owner contributions and withdrawals'],
+        where_to_do_this: ['business bank account', 'bookkeeping spreadsheet or bookkeeping software'],
+        record_and_save: ['rule for owner money paid into the business', 'rule for owner money taken from the business', 'first business transaction date', 'save in the Finance Policy or Bookkeeping Setup file'],
+      };
+    }
+    if (task.task_code === 't01_choose_bookkeeping_method') {
+      return {
+        ...task,
+        instructions: 'Choose how the business will record sales, expenses, invoices, and tax-related documents from the start. Use a method that is simple enough to keep updated every week.',
+        requirements: ['person responsible for keeping records', 'chosen bookkeeping method', 'routine for updating records', 'storage location for documents'],
+        where_to_do_this: ['spreadsheet, Google Sheets, Excel, or bookkeeping software'],
+        record_and_save: ['chosen bookkeeping method', 'person responsible', 'update routine', 'save in the Finance Setup file'],
+      };
+    }
+    if (task.task_code === 't02_set_income_expense_categories') {
+      return {
+        ...task,
+        instructions: 'Create the main categories the business will use to record income and expenses. Keep the list simple and practical so it supports invoicing, expense tracking, and tax administration.',
+        requirements: ['list of income types', 'list of expense types', 'understanding of main business activities'],
+        where_to_do_this: ['spreadsheet or bookkeeping software'],
+        record_and_save: ['final category list', 'notes on how each category should be used', 'save in the Bookkeeping folder'],
+      };
+    }
+    if (task.task_code === 't03_set_document_storage_method') {
+      return {
+        ...task,
+        instructions: 'Choose one safe place to store invoices, receipts, bank statements, licence documents, and tax documents. Use the same folder structure every time so records stay organised and easy to find.',
+        requirements: ['storage location', 'folder structure', 'file naming rule', 'routine for saving documents'],
+        where_to_do_this: ['Google Drive, OneDrive, Dropbox, or secure local folder'],
+        record_and_save: ['folder structure', 'file naming convention', 'storage location used', 'save in the Business Setup Guide or Finance Setup file'],
+      };
+    }
+    if (task.task_code === 't01_confirm_tax_admin_path') {
+      return {
+        ...task,
+        instructions: 'Make sure the business can access the correct tax administration path before launch. In the UAE, this means confirming whether Corporate Tax registration and VAT registration apply and making sure the relevant FTA access path is in place.',
+        requirements: ['legal structure', 'licence or registration details', 'FTA access details if applicable', 'turnover expectation'],
+        where_to_do_this: ['Federal Tax Authority / EmaraTax', 'accountant or tax advisor if needed'],
+        record_and_save: ['corporate tax registration details if applicable', 'VAT registration details if applicable', 'FTA access details', 'save in the Tax folder'],
+      };
+    }
+    if (task.task_code === 't02_confirm_privacy_basics') {
+      return {
+        ...task,
+        instructions: 'If the business will collect customer, employee, or supplier personal information, set the basic rule for how that information will be stored and handled. Keep it simple, but do not ignore it.',
+        requirements: ['customer or admin process', 'types of personal information collected', 'storage method used'],
+        where_to_do_this: ['internal admin process', 'privacy note', 'advisor if needed'],
+        record_and_save: ['data handling note', 'storage rule', 'save in the Compliance folder'],
+      };
+    }
+    if (task.task_code === 't03_confirm_licence_requirements') {
+      return {
+        ...task,
+        instructions: 'Check whether the business activity needs any licence, permit, or extra compliance step before launch. In the UAE, do not assume the licence already covers everything the business wants to do.',
+        requirements: ['business activity', 'operating location', 'setup route', 'delivery model'],
+        where_to_do_this: ['relevant mainland authority or free zone authority', 'regulator if the activity is regulated', 'advisor if the activity is unclear'],
+        record_and_save: ['compliance check result', 'licence or permit requirement note', 'follow-up actions if applicable', 'save in the Compliance folder'],
+      };
+    }
+  }
   if (regionCode === 'south_africa') {
     if (task.task_code === 't01_confirm_legal_structure') {
       return {
