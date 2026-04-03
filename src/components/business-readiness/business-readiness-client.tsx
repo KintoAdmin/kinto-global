@@ -151,6 +151,7 @@ function TaskRow({
   docDraft,
   setDocDraft,
   onSaveDoc,
+  onOpenDocuments,
 }: any) {
   const blockerText = task.blocker || '—';
   const complete = String(task.status || '') === 'done';
@@ -220,10 +221,11 @@ function TaskRow({
                     </div>
                   ) : null}
                   {composerOpen && !previewMode ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 8, marginTop: 10 }}>
                       <input value={docDraft.name} onChange={(e) => setDocDraft((current: any) => ({ ...current, name: e.target.value }))} placeholder="File or document name" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
                       <input value={docDraft.link} onChange={(e) => setDocDraft((current: any) => ({ ...current, link: e.target.value }))} placeholder="Link (optional)" style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }} />
                       <button onClick={onSaveDoc} disabled={saving || !docDraft.name.trim()} style={{ padding: '10px 12px', borderRadius: 8, border: 'none', background: '#111827', color: '#fff', fontWeight: 600 }}>Save</button>
+                      <button onClick={onOpenDocuments} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 600 }}>Open in Documents</button>
                     </div>
                   ) : null}
                 </div>
@@ -250,7 +252,7 @@ function TaskRow({
   );
 }
 
-function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument }: any) {
+function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTaskId, onOpen, onStatusChange, saving, previewMode, showDocComposerForTask, setShowDocComposerForTask, docDraft, setDocDraft, addTaskDocument, openDocumentsForTask }: any) {
   return (
     <div style={{ background:'#fff', border:`1px solid ${current ? '#99f6e4' : '#e5e7eb'}`, borderLeft:`3px solid ${current ? '#14b8a6' : '#cbd5e1'}`, borderRadius:16, overflow:'hidden' }}>
       <div style={{ padding: 16 }}>
@@ -314,6 +316,7 @@ function ActionCard({ action, current, docsByTask, expandedTaskId, setExpandedTa
                     docDraft={docDraft}
                     setDocDraft={setDocDraft}
                     onSaveDoc={() => addTaskDocument(task.task_instance_id)}
+                    onOpenDocuments={() => openDocumentsForTask(task.task_instance_id)}
                   />
                 );
               })}
@@ -485,6 +488,15 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
     }
   }
 
+  function openDocumentsForTask(taskInstanceId: string) {
+    const taskTitle = taskContextByInstance.get(taskInstanceId)?.task?.task_title || '';
+    setDocumentSearch(taskTitle);
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('view', 'documents');
+    if (assessmentId) params.set('assessmentId', assessmentId);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
   async function runLaunchCheck() {
     if (!assessmentId) return;
     setSaving(true);
@@ -548,6 +560,15 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   useEffect(() => {
     if (currentAction?.action_code) setOpenAction(currentAction.action_code);
   }, [currentAction?.action_code]);
+
+  useEffect(() => {
+    if (!currentAction?.tasks?.length) return;
+    const taskIds = new Set(currentAction.tasks.map((task: any) => task.task_instance_id));
+    if (!expandedTaskId || !taskIds.has(expandedTaskId)) {
+      const firstOpenTask = currentAction.tasks.find((task: any) => task.status !== 'done') || currentAction.tasks[0];
+      if (firstOpenTask?.task_instance_id) setExpandedTaskId(firstOpenTask.task_instance_id);
+    }
+  }, [currentAction?.action_code, currentAction?.tasks, expandedTaskId]);
 
   const docsByTask = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -836,6 +857,7 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
                     docDraft={docDraft}
                     setDocDraft={setDocDraft}
                     addTaskDocument={addTaskDocument}
+                    openDocumentsForTask={openDocumentsForTask}
                   />
                 ))}
               </div>
