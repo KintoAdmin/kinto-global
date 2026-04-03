@@ -17,7 +17,6 @@ import {
   getBrBusinessTypeLabel,
   getBrImplementationBlueprint,
   getBrRegionLabel,
-  getBrTaskDocumentExpectations,
 } from '@/lib/business-readiness/catalog';
 import {
   addBrEvidence,
@@ -60,6 +59,23 @@ function phaseBandFromCode(phaseCode?: string | null) {
   return { code: 'P3', name: 'Optimize, Automate, and AI-Enable' };
 }
 
+
+function normalizeDocumentText(value?: string | null) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function buildExpectedFileSummary(expectedFiles: string[] = [], linkedDocs: any[] = []) {
+  const linkedLabels = linkedDocs.map((doc) => normalizeDocumentText(doc?.note_text || doc?.file_url || doc?.external_link || ''));
+  return expectedFiles.map((label) => {
+    const target = normalizeDocumentText(label);
+    const linked = linkedLabels.some((candidate) => candidate && (candidate.includes(target) || target.includes(candidate)));
+    return { label, linked };
+  });
+}
+
 function buildTaskInstances(workspaceId: string, businessTypeCode: string, regionCode: string, employerIntent = false) {
   return buildBrTaskTemplates({ businessTypeCode, regionCode, employerIntent }).map((task, index) => ({
     task_instance_id: `${workspaceId}::${task.code}`,
@@ -85,7 +101,7 @@ function buildTaskInstances(workspaceId: string, businessTypeCode: string, regio
       requirements: task.requirements || [],
       where_to_do_this: task.where_to_do_this || [],
       record_and_save: task.record_and_save || [],
-      expected_files: getBrTaskDocumentExpectations(task.code),
+      expected_files: task.expected_files || [],
       optional: Boolean(task.optional),
     },
     created_at: nowIso(),
@@ -113,6 +129,11 @@ function deriveSectionState(tasks: any[]) {
 
 function buildActionSummaries(workspace: any, bundle: any) {
   const tasks = bundle.tasks || [];
+  const docsByTask = new Map<string, any[]>();
+  (bundle.evidence || []).forEach((doc: any) => {
+    if (!docsByTask.has(doc.task_instance_id)) docsByTask.set(doc.task_instance_id, []);
+    docsByTask.get(doc.task_instance_id)!.push(doc);
+  });
   const blueprint = getBrActionBlueprints({ businessTypeCode: workspace.business_type_code, regionCode: workspace.primary_region_code, employerIntent: getEmployerIntent(bundle.profile) });
   return blueprint.map((action, index) => {
     const actionTasks = action.tasks.map((task) => tasks.find((row) => row.task_code === task.task_code)).filter(Boolean);
@@ -150,7 +171,8 @@ function buildActionSummaries(workspace: any, bundle: any) {
           requirements: task.requirements || [],
           where_to_do_this: task.where_to_do_this || [],
           record_and_save: task.record_and_save || [],
-          expected_files: getBrTaskDocumentExpectations(task.task_code),
+          expected_files: task.expected_files || [],
+          expected_file_summary: buildExpectedFileSummary(task.expected_files || [], docsByTask.get(taskRow?.task_instance_id || '') || []),
           optional: Boolean(task.optional),
           status: taskRow?.status || 'not_started',
           task_instance_id: taskRow?.task_instance_id || '',
@@ -307,7 +329,8 @@ function buildImplementationPlanForInput(input: { businessTypeCode?: string | nu
             requirements: task.requirements || [],
             where_to_do_this: task.where_to_do_this || [],
             record_and_save: task.record_and_save || [],
-            expected_files: getBrTaskDocumentExpectations(task.task_code),
+            expected_files: task.expected_files || [],
+            expected_file_summary: (task.expected_files || []).map((label: string) => ({ label, linked: false })),
             optional: Boolean(task.optional),
             status: taskRow?.status || 'not_started',
             task_instance_id: taskRow?.task_instance_id || `preview::${task.task_code}`,
@@ -417,6 +440,15 @@ export async function getBusinessReadinessPayload(assessmentId: string, preview?
   const previewActionSummaries = flattenImplementationActions(previewImplementationPlan);
   const previewNextActions = buildNextActionsFromActions(previewActionSummaries);
 
+  const expectedFileSummary = actionSummaries.reduce((acc: { total: number; linked: number }, action: any) => {
+    (action.tasks || []).forEach((task: any) => {
+      const rows = task.expected_file_summary || [];
+      acc.total += rows.length;
+      acc.linked += rows.filter((row: any) => row.linked).length;
+    });
+    return acc;
+  }, { total: 0, linked: 0 });
+
   return {
     hasWorkspace: true,
     workspace,
@@ -443,6 +475,11 @@ export async function getBusinessReadinessPayload(assessmentId: string, preview?
     previewImplementationPlan,
     previewActionSummaries,
     previewNextActions,
+    expectedFilesSummary: {
+      total: expectedFileSummary.total,
+      linked: expectedFileSummary.linked,
+      stillNeeded: Math.max(0, expectedFileSummary.total - expectedFileSummary.linked),
+    },
   };
 }
 

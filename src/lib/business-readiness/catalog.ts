@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const BR_TEMPLATE_VERSION = 'br-v11-employer-readiness';
+export const BR_TEMPLATE_VERSION = 'br-v12-expected-files';
 
 export const BR_BUSINESS_TYPES = [
   { code: 'retail_shop', label: 'Retail / Shop' },
@@ -15,6 +15,41 @@ export const BR_REGIONS = [
   { code: 'europe', label: 'Europe (EU-first)' },
 ];
 
+
+
+const TASK_EXPECTED_FILES: Record<string, string[]> = {
+  t01_confirm_registration_route: ['Chosen legal structure note', 'Registration route note'],
+  t02_complete_registration_process: ['Registration confirmation', 'Proof of submission'],
+  t03_save_registration_tax_details: ['Registration certificate', 'Tax reference details'],
+  t01_open_business_account: ['Bank account opening confirmation', 'Business account details'],
+  t02_set_payment_method_launch: ['Invoice template', 'Customer payment instructions'],
+  t03_separate_business_money: ['Business money separation rule'],
+  t01_choose_bookkeeping_method: ['Bookkeeping method note'],
+  t02_set_income_expense_categories: ['Income and expense category list'],
+  t03_set_document_storage_method: ['Document folder structure note'],
+  t01_confirm_tax_admin_path: ['Tax access details', 'Tax administration note'],
+  t02_confirm_privacy_basics: ['Data handling note'],
+  t03_confirm_licence_permit_requirements: ['Licence or permit check result'],
+  t01_set_enquiry_channel: ['Business enquiry channel note'],
+  t02_set_offer_presentation_method: ['Quote, proposal, or offer template'],
+  t03_set_customer_acceptance_step: ['Customer acceptance method note'],
+  t04_set_payment_trigger: ['Payment trigger note'],
+  t01_list_delivery_steps: ['Delivery workflow document'],
+  t02_set_completion_point: ['Completion standard note'],
+  t03_set_issue_handling_rule: ['Issue handling rule'],
+  t01_confirm_worker_type: ['Worker type decision note'],
+  t02_check_employer_registrations: ['Employer registration checklist'],
+  t03_prepare_worker_records: ['Worker onboarding records checklist'],
+  t04_set_payroll_admin_method: ['Payroll or worker admin method note'],
+};
+
+function applyExpectedFiles(task: any) {
+  return {
+    ...task,
+    expected_files: TASK_EXPECTED_FILES[task.task_code] || task.expected_files || [],
+  };
+}
+
 export const BR_PHASES = [
   { code: 'phase_0_define', name: 'Define the business', order: 0 },
   { code: 'phase_1_formal', name: 'Formal setup', order: 1 },
@@ -23,42 +58,6 @@ export const BR_PHASES = [
   { code: 'phase_4_control', name: 'Control setup', order: 4 },
   { code: 'phase_5_launch', name: 'Launch readiness', order: 5 },
 ];
-
-
-const BR_TASK_DOCUMENT_EXPECTATIONS = {
-  t01_confirm_legal_structure: ['Structure decision note'],
-  t02_confirm_ownership_authority: ['Owner list', 'Decision authority note'],
-  t01_confirm_registration_route: ['Registration route note'],
-  t02_complete_registration_process: ['Registration confirmation', 'Proof of submission'],
-  t03_save_registration_tax_details: ['Registration certificate', 'Registration number record', 'Tax number or reference'],
-  t01_open_business_account: ['Bank account opening confirmation', 'Business account details'],
-  t02_set_payment_method_launch: ['Invoice template', 'Payment terms note'],
-  t03_separate_business_money: ['Owner money rule note'],
-  t01_choose_bookkeeping_method: ['Bookkeeping method note'],
-  t02_set_income_expense_categories: ['Income and expense categories list'],
-  t03_set_document_storage_method: ['Folder structure note', 'File naming convention'],
-  t01_set_enquiry_channel: ['Customer enquiry channel note'],
-  t02_set_offer_presentation_method: ['Quote, proposal, or offer template'],
-  t03_set_customer_acceptance_step: ['Acceptance method note'],
-  t04_set_payment_trigger: ['Payment trigger note'],
-  t01_list_delivery_steps: ['Delivery workflow document'],
-  t02_set_completion_point: ['Completion standard note'],
-  t03_set_issue_handling_rule: ['Issue handling rule'],
-  t01_confirm_tax_admin_path: ['Tax administration note', 'Portal access reference'],
-  t02_confirm_privacy_basics: ['Privacy or data handling note'],
-  t03_confirm_licence_permit_requirements: ['Compliance check result'],
-  t01_check_critical_setup_actions: ['Launch checklist'],
-  t02_check_saved_business_records: ['Document check result'],
-  t03_confirm_first_trading_setup: ['First trading readiness note'],
-  t01_confirm_worker_type: ['Worker type decision note'],
-  t02_check_employer_registrations: ['Employer registration checklist'],
-  t03_prepare_worker_records: ['Worker onboarding record checklist'],
-  t04_set_payroll_admin_method: ['Payroll or worker admin method note'],
-};
-
-export function getBrTaskDocumentExpectations(taskCode) {
-  return BR_TASK_DOCUMENT_EXPECTATIONS[taskCode] || [];
-}
 
 const COMMON_STRUCTURE = [
   {
@@ -1007,7 +1006,7 @@ export function getBrImplementationBlueprint(input?: { businessTypeCode?: string
       ...section,
       actions: section.actions.map((action) => ({
         ...action,
-        tasks: action.tasks.map((task) => applyBusinessTypeText(applyRegionText(task, regionCode), businessTypeCode)),
+        tasks: action.tasks.map((task) => applyExpectedFiles(applyBusinessTypeText(applyRegionText(task, regionCode), businessTypeCode))),
       })),
     })),
   }));
@@ -1047,6 +1046,7 @@ export function buildBrTaskTemplates(input?: { businessTypeCode?: string | null;
       requirements: task.requirements || [],
       where_to_do_this: task.where_to_do_this || [],
       record_and_save: task.record_and_save || [],
+      expected_files: task.expected_files || [],
       optional: Boolean(task.optional),
     })),
   );
