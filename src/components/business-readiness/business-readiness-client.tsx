@@ -562,13 +562,13 @@ export function BusinessReadinessClient({ assessmentId, initialData, view = 'ove
   }, [currentAction?.action_code]);
 
   useEffect(() => {
-    if (!currentAction?.tasks?.length) return;
-    const taskIds = new Set(currentAction.tasks.map((task: any) => task.task_instance_id));
-    if (!expandedTaskId || !taskIds.has(expandedTaskId)) {
-      const firstOpenTask = currentAction.tasks.find((task: any) => task.status !== 'done') || currentAction.tasks[0];
-      if (firstOpenTask?.task_instance_id) setExpandedTaskId(firstOpenTask.task_instance_id);
+    if (!currentAction?.tasks?.length) {
+      setExpandedTaskId(null);
+      return;
     }
-  }, [currentAction?.action_code, currentAction?.tasks, expandedTaskId]);
+    const firstOpenTask = currentAction.tasks.find((task: any) => task.status !== 'done') || currentAction.tasks[0];
+    setExpandedTaskId(firstOpenTask?.task_instance_id || null);
+  }, [currentAction?.action_code]);
 
   const docsByTask = useMemo(() => {
     const map = new Map<string, any[]>();
