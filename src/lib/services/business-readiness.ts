@@ -352,6 +352,7 @@ export async function getBusinessReadinessPayload(assessmentId: string) {
     sectionStates: bundle.domains || [],
     blockers: bundle.blockers || [],
     tasks: bundle.tasks || [],
+    evidence: bundle.evidence || [],
     nextActions,
     actionSummaries,
     implementationPlan,
